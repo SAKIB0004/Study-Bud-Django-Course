@@ -1,0 +1,22 @@
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+env/
+venv/
+.venv/
+
+# PyCharm
+.idea/
+
+# Django local database
+db.sqlite3
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
