@@ -1,4 +1,3 @@
-from django import contrib
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.db.models import Q
@@ -8,7 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from .models import Room, Topic, Message
-from .forms import RoomForm
+from .forms import RoomForm, UserForm
 # Create your views here.
 
 # rooms = [
@@ -159,7 +158,6 @@ def delete_room(request, pk):
     context = {'obj': room}
     return render(request, 'base/delete.html', context)
 
-
 @login_required(login_url ='/login')
 def delete_message(request, pk):
     message = Message.objects.get(id=pk)
@@ -172,3 +170,17 @@ def delete_message(request, pk):
         return redirect('home')
     context = {'obj': message}
     return render(request, 'base/delete.html', context)
+
+@login_required(login_url ='/login')
+def update_user(request):
+    user = request.user
+    form = UserForm(instance=user)
+
+    if request.method == 'POST':
+        form = UserForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('user_profile', pk=user.pk)
+
+    context = {'form': form}
+    return  render(request, 'base/update_user.html', context)
