@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from base.models import Room, Topic, User
+from base.models import Room, Topic, User, Message
 
 
 class RoomSerializer(ModelSerializer):
@@ -28,3 +28,17 @@ class UserSerializer(ModelSerializer):
         user.save()
 
         return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'name', 'bio']
+        read_only_fields = ['id']
+
+
+class MessageSerializer(ModelSerializer):
+    class Meta:
+        model = Message
+        fields = '__all__'
+        read_only_fields = ['user', 'room']
