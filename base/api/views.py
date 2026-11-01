@@ -59,7 +59,7 @@ def get_rooms(request):
         serializer = RoomSerializer(rooms, many=True)
         return Response(serializer.data)
 
-    # Require authentication for POST
+    # Require authentication T
     if not request.user.is_authenticated:
         return Response(
             {"detail": "Authentication required."},
@@ -80,7 +80,7 @@ def get_room(request, pk):
 
 @api_view(['PATCH'])
 def update_room(request, pk):
-    # Require authentication for POST
+    # Require authentication
     if not request.user.is_authenticated:
         return Response(
             {"detail": "Authentication required."},
@@ -100,6 +100,30 @@ def update_room(request, pk):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+def delete_room(request, pk):
+    if not request.user.is_authenticated:
+        return Response(
+            {"detail": "Authentication required."},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    room = get_object_or_404(Room, id=pk)
+
+    if room.host != request.user:
+        return Response(
+            {"detail": "You are not the host"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    room.delete()
+    return Response(
+        {"detail": "You have successfully deleted the room"},
+        status=status.HTTP_204_NO_CONTENT
+    )
+
+
 
 
 

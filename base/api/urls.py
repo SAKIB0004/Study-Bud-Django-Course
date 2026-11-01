@@ -20,6 +20,7 @@ urlpatterns = [
     path('rooms/', views.get_rooms), # GET, POST
     path('rooms/<str:pk>/', views.get_room),
     path('rooms/<str:pk>/update/', views.update_room),
+    path('rooms/<str:pk>/delete/', views.delete_room),
 
     path('topics/', views.get_topics), # GET, POST
     path('topics/<str:pk>/', views.get_topic),
