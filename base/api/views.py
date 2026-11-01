@@ -102,19 +102,19 @@ def update_user(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def get_rooms(request):
     if request.method == 'GET':
         rooms = Room.objects.all()
         serializer = RoomSerializer(rooms, many=True)
         return Response(serializer.data)
 
-    # # Require authentication T
-    # if not request.user.is_authenticated:
-    #     return Response(
-    #         {"detail": "Authentication required."},
-    #         status=status.HTTP_401_UNAUTHORIZED
-    #     )
+    # Require authentication T
+    if not request.user.is_authenticated:
+        return Response(
+            {"detail": "Authentication required."},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
 
     serializer = RoomSerializer(data=request.data)
     if serializer.is_valid():
@@ -124,7 +124,7 @@ def get_rooms(request):
 
 @api_view(['GET'])
 def get_room(request, pk):
-    room = Room.objects.get(id=pk)
+    room = get_object_or_404(Room, id=pk)
     serializer = RoomSerializer(room, many=False)
     return Response(serializer.data)
 
@@ -174,7 +174,8 @@ def delete_room(request, pk):
 
 @api_view(['GET'])
 def get_messages(request, pk):
-    messages = Message.objects.filter(room_id=pk)
+    room = get_object_or_404(Room, id=pk)
+    messages = Message.objects.filter(room=room).select_related('user', 'room').order_by('-created')
     serializer = MessageSerializer(messages, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -216,9 +217,7 @@ def delete_message(request, pk, message_id):
         )
 
     message.delete()
-    return Response(
-        {"detail": "You have successfully deleted the message"},
-    )
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['GET'])
 def get_participants(request, pk):
@@ -228,7 +227,7 @@ def get_participants(request, pk):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def get_topics(request):
     if request.method == 'GET':
         topics = Topic.objects.all()
@@ -236,11 +235,11 @@ def get_topics(request):
         return Response(serializer.data)
 
     # Require authentication
-    # if not request.user.is_authenticated:
-    #     return Response(
-    #         {"detail": "Authentication required."},
-    #         status=status.HTTP_401_UNAUTHORIZED
-    #     )
+    if not request.user.is_authenticated:
+        return Response(
+            {"detail": "Authentication required."},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
 
     serializer = TopicSerializer(data=request.data)
     if serializer.is_valid():
@@ -256,8 +255,8 @@ def get_topic(request, pk):
 
 @api_view(['GET'])
 def get_activity(request):
-    room_messages = Message.objects.all().order_by('-created')
-    serializer = MessageSerializer(room_messages, many=True)
+    activities = Message.objects.select_related('user', 'room').order_by('-created')[:10]
+    serializer = MessageSerializer(activities, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
 
