@@ -15,19 +15,20 @@ function Navbar() {
     return (
         <header className="navbar">
 
-            <Link to="/" className="brand">
-                StudyBud
-            </Link>
+            <Link to="/" className="brand"> StudyBud </Link>
 
             <div className="navbar-actions">
 
                 {isAuthenticated ? (
                     <div className="navbar-user-menu">
 
-                        {/* Username link */}
-                        <Link to="/profile" className="user-link">
-                            {user?.username}
-                        </Link>
+                        {/* User name and username */}
+                        <div className="navbar-user-info">
+                            <strong className="navbar-user-name">{user?.name || user?.username}</strong>
+                            <Link to="/profile" className="user-link">
+                                    <span>@{user?.username}</span>
+                            </Link>
+                        </div>
 
                         {/* Dropdown menu */}
                         <details className="user-dropdown">
@@ -38,16 +39,9 @@ function Navbar() {
 
                             <div className="dropdown-menu">
 
-                                <Link to="/profile/edit">
-                                    Update
-                                </Link>
+                                <Link to="/profile/edit">Update</Link>
 
-                                <button
-                                    type="button"
-                                    onClick={handleLogout}
-                                >
-                                    Logout
-                                </button>
+                                <button type="button"  onClick={handleLogout} > Logout</button>
 
                             </div>
 
@@ -56,9 +50,7 @@ function Navbar() {
                     </div>
                 ) : (
                     <>
-                        <Link to="/login" className="nav-login">
-                            Login
-                        </Link>
+                        <Link to="/login" className="nav-login"> Login </Link>
                     </>
                 )}
 

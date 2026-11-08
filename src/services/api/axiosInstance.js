@@ -6,9 +6,6 @@ const BASE_URL = process.env.REACT_APP_API_URL;
 
 const api = axios.create({
     baseURL: BASE_URL,
-    headers: {
-        "Content-Type": "application/json",
-    },
 });
 
 // Attach access token to every API request
@@ -40,22 +37,15 @@ function refreshAccessToken() {
         }
 
         refreshPromise = axios
-            .post(`${BASE_URL}/token/refresh/`, {
-                refresh: refreshToken,
-            })
+            .post(`${BASE_URL}/token/refresh/`, { refresh: refreshToken, })
             .then((response) => {
                 const { access, refresh } = response.data;
 
-                tokenStorage.setTokens({
-                    access,
-                    refresh,
-                });
+                tokenStorage.setTokens({ access, refresh, });
 
                 return access;
             })
-            .finally(() => {
-                refreshPromise = null;
-            });
+            .finally(() => { refreshPromise = null; });
     }
 
     return refreshPromise;
@@ -78,12 +68,7 @@ api.interceptors.response.use(
             originalRequest?.url?.includes(endpoint)
         );
 
-        if (
-            isUnauthorized &&
-            originalRequest &&
-            !originalRequest._retry &&
-            !isAuthEndpoint
-        ) {
+        if ( isUnauthorized && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;
 
             try {
@@ -100,9 +85,7 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 tokenStorage.clearTokens();
 
-                window.dispatchEvent(
-                    new Event("auth:session-expired")
-                );
+                window.dispatchEvent( new Event("auth:session-expired"));
 
                 return Promise.reject(refreshError);
             }

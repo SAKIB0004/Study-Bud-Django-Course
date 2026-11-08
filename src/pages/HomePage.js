@@ -220,9 +220,7 @@ function HomePage() {
                                     <RoomCard
                                         key={room.id}
                                         room={room}
-                                        topicName={
-                                            selectedTopic?.name || "Unknown Topic"
-                                        }
+                                        topicName={ selectedTopic?.name || "Unknown Topic" }
                                         host={selectedHost}
                                     />
                                 );

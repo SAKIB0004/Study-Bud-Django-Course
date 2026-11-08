@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { FaTrashAlt } from "react-icons/fa";
 import formatRelativeTime from "../../utils/formatRelativeTime";
 
+import ProfileAvatar from "../profile/ProfileAvatar";
+
 
 function ActivityCard({ activity, author, room, currentUserId }) {
     const isOwner =
@@ -15,6 +17,8 @@ function ActivityCard({ activity, author, room, currentUserId }) {
             <div className="activities__boxHeader">
 
                 <div className="activities__author">
+                    <ProfileAvatar user={author} size="small" />
+                    
                     <span>{author?.name || "unknown"}</span>
                 </div>
 

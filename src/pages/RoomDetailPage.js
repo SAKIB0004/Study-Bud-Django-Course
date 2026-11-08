@@ -10,6 +10,7 @@ import { AuthContext } from "../context/AuthContext";
 import TopicsSidebar from "../components/topics/TopicsSidebar";
 import RightSidebar from "../components/layout/RightSidebar";
 import formatRelativeTime from "../utils/formatRelativeTime";
+import getImageUrl from "../utils/getImageUrl";
 
 function RoomDetailPage() {
     const { id } = useParams();
@@ -290,9 +291,10 @@ function RoomDetailPage() {
                                 >
 
                                     <div className="user-avatar">
-                                        {(host.username || "U")
-                                            .charAt(0)
-                                            .toUpperCase()}
+                                        <img
+                                            src={getImageUrl(host.avatar)}
+                                            alt={`${host.username}'s avatar`}
+                                        />
                                     </div>
 
                                     <strong>
@@ -360,9 +362,10 @@ function RoomDetailPage() {
                                                 >
 
                                                     <div className="user-avatar">
-                                                        {(messageUser?.username || "U")
-                                                            .charAt(0)
-                                                            .toUpperCase()}
+                                                        <img
+                                                            src={getImageUrl(messageUser?.avatar)}
+                                                            alt={`${messageUser?.username || "User"}'s avatar`}
+                                                        />
                                                     </div>
 
                                                     <strong>
@@ -458,9 +461,7 @@ function RoomDetailPage() {
                     title={
                         <>
                             Participants
-                            <span>
-                                {" "}({participants.length} Joined)
-                            </span>
+                            <span> {" "}({participants.length} Joined)</span>
                         </>
                     }
                 >
@@ -477,32 +478,25 @@ function RoomDetailPage() {
                                 >
 
                                     <div className="user-avatar">
-                                        {(participant.username || "U")
-                                            .charAt(0)
-                                            .toUpperCase()}
+                                        <img
+                                            src={getImageUrl(participant.avatar)}
+                                            alt={`${participant.username || "User"}'s avatar`}
+                                        />
                                     </div>
 
                                     <div className="participant-info">
 
-                                        <strong>
-                                            {participant.name ||
-                                                participant.username}
-                                        </strong>
+                                        <strong> {participant.name || participant.username}</strong>
 
-                                        <span>
-                                            @{participant.username}
-                                        </span>
+                                        <span>@{participant.username}</span>
 
                                     </div>
 
                                 </Link>
-
                             ))
 
                         ) : (
-
                             <p>No participants found.</p>
-
                         )}
 
                     </div>

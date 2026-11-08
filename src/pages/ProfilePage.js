@@ -12,6 +12,7 @@ import TopicsSidebar from "../components/topics/TopicsSidebar";
 import RightSidebar from "../components/layout/RightSidebar";
 import ActivityList from "../components/activities/ActivityList";
 import RoomCard from "../components/rooms/RoomCard";
+import ProfileAvatar from "../components/profile/ProfileAvatar";
 
 function ProfilePage() {
 
@@ -224,6 +225,10 @@ function ProfilePage() {
 
                     {/* Profile information */}
                     <div className="profile">
+                        <ProfileAvatar
+                            user={profile}
+                            size="large"
+                        />
 
                         <div className="profile__info">
 
@@ -303,10 +308,7 @@ function ProfilePage() {
                                     <RoomCard
                                         key={room.id}
                                         room={room}
-                                        topicName={
-                                            selectedTopic?.name ||
-                                            "Unknown Topic"
-                                        }
+                                        topicName={ selectedTopic?.name || "Unknown Topic"}
                                         host={selectedHost || profile}
                                     />
                                 );

@@ -1,8 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import useAuth from "../hooks/useAuth";
+
+import getImageUrl from "../utils/getImageUrl";
 
 function EditProfilePage() {
     const { user, updateProfile } = useAuth();
@@ -18,6 +19,28 @@ function EditProfilePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+
+    const [avatar, setAvatar] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState("");
+
+    const handleAvatarChange = (event) => {
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            setError("Please select a valid image.");
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            setError("Image must be smaller than 5 MB.");
+            return;
+        }
+
+        setAvatar(file);
+        setAvatarPreview(URL.createObjectURL(file));
+    };
 
     useEffect(() => {
         if (user) {
@@ -47,15 +70,22 @@ function EditProfilePage() {
         setSuccess("");
 
         try {
-            const updatedData = {};
+            const updatedData = new FormData();
 
             Object.keys(formData).forEach((key) => {
-                if (formData[key] !== (user[key] || "")) {
-                    updatedData[key] = formData[key].trim();
+                const newValue = formData[key].trim();
+                const oldValue = user[key] || "";
+
+                if (newValue !== oldValue) {
+                    updatedData.append(key, newValue);
                 }
             });
 
-            if (Object.keys(updatedData).length === 0) {
+            if (avatar) {
+                updatedData.append("avatar", avatar);
+            }
+
+            if ([...updatedData.keys()].length === 0) {
                 setError("You haven't made any changes.");
                 return;
             }
@@ -119,6 +149,37 @@ function EditProfilePage() {
                 )}
 
                 <form onSubmit={handleSubmit}>
+
+                    <div className="form-group">
+
+                        <label>Profile Picture</label>
+
+                        <div className="edit-profile-avatar">
+
+                            <img
+                                src={
+                                    avatarPreview ||
+                                    getImageUrl(user.avatar)
+                                }
+                                alt="Profile"
+                            />
+
+                            <div>
+                                <label htmlFor="avatar">Change Picture</label>
+
+                                <input
+                                    type="file"
+                                    id="avatar"
+                                    accept="image/*"
+                                    onChange={handleAvatarChange}
+                                    disabled={loading}
+                                />
+
+                            </div>
+
+                        </div>
+
+                    </div>
 
                     <div className="form-group">
                         <label htmlFor="name">Full Name</label>

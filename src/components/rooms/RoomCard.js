@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import formatRelativeTime from "../../utils/formatRelativeTime";
+import ProfileAvatar from "../profile/ProfileAvatar";
+
 
 function RoomCard({ room, topicName, host }) {
 
@@ -14,11 +16,22 @@ function RoomCard({ room, topicName, host }) {
             {/* Host and creation time */}
             <div className="room-card-header">
 
-                <Link to={`/profile/${host?.id || room.host}/`}>
-                    <strong>
-                        @{host?.username || "Unknown User"}
-                    </strong>
-                </Link>
+                <div className="room-card-host">
+
+                    <Link to={`/profile/${host?.id || room.host}/`}>
+                        <ProfileAvatar
+                            user={host}
+                            size="small"
+                        />
+                    </Link>
+
+                    <Link to={`/profile/${host?.id || room.host}/`}>
+                        <strong>
+                            @{host?.username || "Unknown User"}
+                        </strong>
+                    </Link>
+
+                </div>
 
                 <span>{formatRelativeTime(room.created)}</span>
 
