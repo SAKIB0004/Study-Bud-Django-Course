@@ -2,7 +2,8 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -73,6 +74,7 @@ def get_user(request, pk):
     return Response(serializer.data)
 
 @api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
 def create_user(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
@@ -82,6 +84,7 @@ def create_user(request):
 
 
 @api_view(['PATCH'])
+@parser_classes([MultiPartParser, FormParser])
 @permission_classes([IsAuthenticated])
 def update_user(request, pk):
     # if not request.user.is_authenticated:
