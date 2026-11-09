@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 
 import roomService from "../services/api/roomService";
 
 function DeleteRoomPage({ type = "room" }) {
     const { id, messageId } = useParams();
     const navigate = useNavigate();
-
+    const location = useLocation();
+    const passedMessage = location.state?.message;
     const isMessage = type === "message";
-
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(false);
@@ -19,6 +19,17 @@ function DeleteRoomPage({ type = "room" }) {
         const fetchItem = async () => {
             try {
                 if (isMessage) {
+
+                    // Reuse message data passed from RoomDetailPage
+                    if (
+                        passedMessage &&
+                        String(passedMessage.id) === String(messageId)
+                    ) {
+                        setItem(passedMessage);
+                        return;
+                    }
+
+                    // Fallback: fetch messages if page is opened directly
                     const response = await roomService.getMessages(id);
 
                     const messages = Array.isArray(response)
@@ -47,13 +58,14 @@ function DeleteRoomPage({ type = "room" }) {
                     error.response?.data?.detail ||
                     `Unable to load ${isMessage ? "message" : "room"}.`
                 );
+
             } finally {
                 setLoading(false);
             }
         };
 
         fetchItem();
-    }, [id, messageId, isMessage]);
+    }, [id, messageId, isMessage, passedMessage]);
 
     // Delete room or message
     const handleDelete = async () => {

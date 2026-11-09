@@ -22,14 +22,17 @@ function CreateRoomPage() {
     const [error, setError] = useState("");
 
     // Fetch topics and, in edit mode, the existing room
+    // Fetch topics and existing room concurrently in edit mode
     useEffect(() => {
         const fetchFormData = async () => {
             try {
-                const topicsResponse = await roomService.getTopics();
-                setTopics(topicsResponse);
-
                 if (isEditMode) {
-                    const room = await roomService.getRoomById(id);
+                    const [topicsResponse, room] = await Promise.all([
+                        roomService.getTopics(),
+                        roomService.getRoomById(id)
+                    ]);
+
+                    setTopics(topicsResponse);
 
                     const topicId =
                         typeof room.topic === "object"
@@ -45,14 +48,21 @@ function CreateRoomPage() {
                         name: room.name || "",
                         description: room.description || "",
                     });
+
+                } else {
+                    const topicsResponse = await roomService.getTopics();
+                    setTopics(topicsResponse);
                 }
+
             } catch (error) {
                 console.error("Failed to load form data:", error);
+
                 setError(
                     isEditMode
                         ? "Unable to load room details."
                         : "Unable to load topics."
                 );
+
             } finally {
                 setLoadingTopics(false);
                 setLoadingRoom(false);

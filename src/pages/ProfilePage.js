@@ -19,7 +19,7 @@ function ProfilePage() {
     const navigate = useNavigate();
 
     const { id } = useParams();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
 
     // Profile ID from URL or logged-in user
     const profileId = id || user?.id;
@@ -47,20 +47,20 @@ function ProfilePage() {
     // Fetch ProfilePage data
     useEffect(() => {
 
-        if (!profileId) return;
+        if (authLoading || !profileId) return;
 
         let isMounted = true;
 
         const fetchProfileData = async () => {
-
             try {
-
                 setLoading(true);
                 setError("");
 
                 // Fetch all required data
                 const results = await Promise.allSettled([
-                    userService.getUserById(profileId),
+                    isOwnProfile
+                        ? Promise.resolve(user)
+                        : userService.getUserById(profileId),
                     roomService.getRooms(),
                     roomService.getTopics(),
                     roomService.getUsers(),
@@ -77,13 +77,7 @@ function ProfilePage() {
                 }
 
                 // Extract API responses
-                const [
-                    profileResponse,
-                    roomsResponse,
-                    topicsResponse,
-                    usersResponse,
-                    activityResponse
-                ] = results.map((result) =>
+                const [ profileResponse, roomsResponse, topicsResponse, usersResponse, activityResponse] = results.map((result) =>
                     result.status === "fulfilled"
                         ? result.value
                         : null
@@ -191,7 +185,14 @@ function ProfilePage() {
             isMounted = false;
         };
 
-    }, [profileId]);
+    }, [profileId, isOwnProfile, authLoading]);
+
+    // Keep own profile synchronized with AuthContext
+    useEffect(() => {
+        if (isOwnProfile && user) {
+            setProfile(user);
+        }
+    }, [isOwnProfile, user]);
 
     // Loading state
     if (loading) {
@@ -215,26 +216,18 @@ function ProfilePage() {
             <div className="home-page-layout">
 
                 {/* LEFT COLUMN: TOPICS */}
-                <TopicsSidebar
-                    topics={topics}
-                    rooms={allRooms}
-                />
+                <TopicsSidebar topics={topics} rooms={allRooms}/>
 
                 {/* MIDDLE COLUMN: PROFILE */}
                 <section className="home-feed-column">
 
                     {/* Profile information */}
                     <div className="profile">
-                        <ProfileAvatar
-                            user={profile}
-                            size="large"
-                        />
+                        <ProfileAvatar user={profile} size="large" />
 
                         <div className="profile__info">
 
-                            <h3>
-                                {profile.name || profile.username}
-                            </h3>
+                            <h3> {profile.name || profile.username} </h3>
 
                             <p>@{profile.username}</p>
 
@@ -254,9 +247,7 @@ function ProfilePage() {
 
                             <h3>About</h3>
 
-                            <p>
-                                {profile.bio || "No bio available."}
-                            </p>
+                            <p> {profile.bio || "No bio available."}</p>
 
                             {isOwnProfile && (
                                 <p>Email: {profile.email}</p>
@@ -270,9 +261,7 @@ function ProfilePage() {
                     <div className="roomList__header">
 
                         <div>
-                            <h2>
-                                Study Rooms Hosted by {profile.username}
-                            </h2>
+                            <h2> Study Rooms Hosted by {profile.username}</h2>
                         </div>
 
                     </div>
@@ -295,13 +284,11 @@ function ProfilePage() {
                                         : room.host;
 
                                 const selectedTopic = topics.find(
-                                    (topic) =>
-                                        String(topic.id) === String(topicId)
+                                    (topic) => String(topic.id) === String(topicId)
                                 );
 
                                 const selectedHost = users.find(
-                                    (user) =>
-                                        String(user.id) === String(hostId)
+                                    (user) => String(user.id) === String(hostId)
                                 );
 
                                 return (
@@ -316,11 +303,7 @@ function ProfilePage() {
                             })
 
                         ) : (
-
-                            <p>
-                                This user hasn't hosted any rooms yet.
-                            </p>
-
+                            <p> This user hasn't hosted any rooms yet. </p>
                         )}
 
                     </div>
@@ -328,10 +311,7 @@ function ProfilePage() {
                 </section>
 
                 {/* RIGHT COLUMN: USER RECENT ACTIVITY */}
-                <RightSidebar
-                    className="home-activity-column"
-                    title="Recent Activity"
-                >
+                <RightSidebar className="home-activity-column" title="Recent Activity">
 
                     <ActivityList
                         activities={activities}

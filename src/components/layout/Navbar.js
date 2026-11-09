@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 // import { FaSearch, FaUserCircle } from "react-icons/fa";
 
 import useAuth from "../../hooks/useAuth";
+import ProfileAvatar from "../profile/ProfileAvatar";
 
 function Navbar() {
 
@@ -21,13 +22,16 @@ function Navbar() {
 
                 {isAuthenticated ? (
                     <div className="navbar-user-menu">
-
-                        {/* User name and username */}
                         <div className="navbar-user-info">
-                            <strong className="navbar-user-name">{user?.name || user?.username}</strong>
-                            <Link to="/profile" className="user-link">
-                                    <span>@{user?.username}</span>
-                            </Link>
+                            <ProfileAvatar user={user} size="small" />
+                            {/* User name and username */}
+                            <div className="navbar-user-details">
+                            
+                                <strong className="navbar-user-name">{user?.name || user?.username}</strong>
+                                <Link to="/profile" className="user-link">
+                                        <span>@{user?.username}</span>
+                                </Link>
+                            </div>
                         </div>
 
                         {/* Dropdown menu */}

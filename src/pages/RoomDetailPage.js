@@ -51,6 +51,10 @@ function RoomDetailPage() {
 
     // Fetch room information and related data
     useEffect(() => {
+
+        // Track whether this effect is still active
+        let isActive = true;
+
         const fetchRoomDetails = async () => {
             try {
                 setLoading(true);
@@ -61,14 +65,19 @@ function RoomDetailPage() {
                     usersResponse,
                     topicsResponse,
                     messagesResponse,
-                    roomsResponse
+                    roomsResponse,
+                    participantsResponse
                 ] = await Promise.all([
                     roomService.getRoomById(id),
                     roomService.getUsers(),
                     roomService.getTopics(),
                     roomService.getMessages(id),
-                    roomService.getRooms()
+                    roomService.getRooms(),
+                    roomService.getParticipants(id)
                 ]);
+
+                // Prevent stale responses from updating state
+                if (!isActive) return;
 
                 // Normalize API responses
                 const userList = Array.isArray(usersResponse)
@@ -93,11 +102,18 @@ function RoomDetailPage() {
                 setTopics(topicList);
                 setMessages(messageList);
                 setRooms(roomList);
+                const participantList = Array.isArray(participantsResponse)
+                    ? participantsResponse
+                    : participantsResponse.results || [];
+
+                setParticipants(participantList);
 
                 // Fetch participants
-                await fetchParticipants();
+                // await fetchParticipants();
 
             } catch (error) {
+                // Ignore errors from outdated requests
+                if (!isActive) return;
                 console.error("Failed to fetch room:", error);
 
                 setError(
@@ -106,20 +122,25 @@ function RoomDetailPage() {
                 );
 
             } finally {
-                setLoading(false);
+                // Only update loading state for the active effect
+                if (isActive) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchRoomDetails();
 
+        // Cleanup function
+        return () => {
+            isActive = false;
+        };
+
     }, [id]);
 
-
-    // Send a new message
     // Send a new message
     const handleMessageSubmit = async (event) => {
         event.preventDefault();
-
         const body = messageBody.trim();
 
         if (!body || sending) return;
@@ -393,6 +414,7 @@ function RoomDetailPage() {
                                                     {canDeleteMessage && (
                                                         <Link
                                                             to={`/room/${id}/messages/${message.id}/delete`}
+                                                            state = {{ message }}
                                                             className="message-delete-btn"
                                                         >
                                                             <FaTrashAlt />

@@ -1,11 +1,12 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 function getImageUrl(imagePath) {
-
+    // Default avatar from React public folder
     if (!imagePath) {
-        return `${API_BASE_URL}/images/avatar.svg`;
+        return `${process.env.PUBLIC_URL}/images/avatar.svg`;
     }
 
+    // Already an absolute URL
     if (
         imagePath.startsWith("http://") ||
         imagePath.startsWith("https://")
@@ -13,7 +14,10 @@ function getImageUrl(imagePath) {
         return imagePath;
     }
 
-    return `${API_BASE_URL}${
+    // Remove /api to get the Django server root
+    const MEDIA_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
+
+    return `${MEDIA_BASE_URL}${
         imagePath.startsWith("/") ? "" : "/"
     }${imagePath}`;
 }
