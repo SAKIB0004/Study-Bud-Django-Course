@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 # from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 from rest_framework_simplejwt.views import (
@@ -7,7 +7,6 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
-    # path('token/', obtain_auth_token),
     # API information
     path('', views.get_routes),
 
@@ -21,6 +20,11 @@ urlpatterns = [
     path('users/<str:pk>/', views.get_user),
     path('users-create/', views.create_user),
     path('users/<str:pk>/update/', views.update_user),
+
+
+    #Roles
+    path('roles/', views.get_roles),
+    # path('users/roles/create/', views.create_role),
 
     # Rooms
     path('rooms/', views.get_rooms), # GET, POST
@@ -45,4 +49,7 @@ urlpatterns = [
 
     # Home
     path('home/', views.get_home),
+
+    #Admin
+    path("admin/", include("base.api.admin.urls")),
 ]

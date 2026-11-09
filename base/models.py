@@ -6,8 +6,21 @@ def upload_to(instance, filename):
     return 'avatar/{filename}'.format(filename=filename)
 
 # Create your models here.
+class Role(models.Model):
+    USER = "USER"
+    ROOT_ADMIN = "ROOT_ADMIN"
+
+    ROLE_CHOICES = [(USER, "User"), (ROOT_ADMIN, "Root Admin")]
+
+    name = models.CharField(max_length=50, choices=ROLE_CHOICES,unique=True)
+    description = models.TextField(null=True,blank=True)
+
+    def __str__(self):
+        return self.name
+
 
 class User(AbstractUser):
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True,blank=True,related_name="users")
     name = models.CharField(null=True, max_length=255, blank=True)
     email = models.EmailField(unique=True, null=True, blank=True)
     bio = models.TextField(null=True)

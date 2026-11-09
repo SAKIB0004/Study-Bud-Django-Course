@@ -3,15 +3,19 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, parser_classes
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-from base.models import Room, Topic, User, Message
-from .serializers import RoomSerializer, TopicSerializer, UserSerializer, UserProfileSerializer, MessageSerializer
+from base.models import Room, Topic, User, Message, Role
+from .serializers import (
+    RoomSerializer, TopicSerializer, MessageSerializer,
+    UserSerializer, UserCreateSerializer, UserUpdateSerializer,
+    RoleSerializer
+)
 
 
 @api_view(['GET'])
@@ -23,6 +27,9 @@ def get_routes(request):
         'POST /api/token/',
         'POST /api/token/refresh/',
         'POST /api/logout/',
+
+        #Role
+        'GET /api/users/roles/',
 
         # Users
         'GET /api/users/',
@@ -74,9 +81,9 @@ def get_user(request, pk):
     return Response(serializer.data)
 
 @api_view(['POST'])
-@parser_classes([MultiPartParser, FormParser])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def create_user(request):
-    serializer = UserSerializer(data=request.data)
+    serializer = UserCreateSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -87,22 +94,26 @@ def create_user(request):
 @parser_classes([MultiPartParser, FormParser])
 @permission_classes([IsAuthenticated])
 def update_user(request, pk):
-    # if not request.user.is_authenticated:
-    #     return Response(
-    #         {"detail": "Authentication required."},
-    #         status=status.HTTP_401_UNAUTHORIZED
-    #     )
+
     if request.user.id != int(pk):
         return Response(
             {"detail": "You are not allowed to update this profile."},
             status = status.HTTP_403_FORBIDDEN
         )
 
-    serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+    serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def get_roles(request):
+    role = Role.objects.all()
+    serializer = RoleSerializer(role, many=True)
+    return Response(serializer.data)
+
 
 @api_view(['GET', 'POST'])
 # @permission_classes([IsAuthenticated])
@@ -134,12 +145,6 @@ def get_room(request, pk):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_room(request, pk):
-    # Require authentication
-    # if not request.user.is_authenticated:
-    #     return Response(
-    #         {"detail": "Authentication required."},
-    #         status=status.HTTP_401_UNAUTHORIZED
-    #     )
 
     room = get_object_or_404(Room, id=pk)
 
@@ -159,11 +164,7 @@ def update_room(request, pk):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_room(request, pk):
-    # if not request.user.is_authenticated:
-    #     return Response(
-    #         {"detail": "Authentication required."},
-    #         status=status.HTTP_401_UNAUTHORIZED
-    #     )
+
     room = get_object_or_404(Room, id=pk)
 
     if room.host != request.user:
@@ -186,11 +187,6 @@ def get_messages(request, pk):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_message(request, pk):
-    # if not request.user.is_authenticated:
-    #     return Response(
-    #         {"detail": "Authentication required."},
-    #         status=status.HTTP_401_UNAUTHORIZED
-    #     )
 
     room = get_object_or_404(Room, id=pk)
     serializer = MessageSerializer(data=request.data)
@@ -205,11 +201,7 @@ def create_message(request, pk):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_message(request, pk, message_id):
-    # if not request.user.is_authenticated:
-    #     return Response(
-    #         {"detail": "Authentication required."},
-    #         status=status.HTTP_401_UNAUTHORIZED
-    #     )
+
     room = get_object_or_404(Room, id=pk)
     message = get_object_or_404(Message, id=message_id,room=room)
 
