@@ -17,6 +17,14 @@ import EditProfilePage from "../pages/EditProfilePage";
 import ProtectedRoute from "./ProtectedRoute";
 import GuestRoute from "./GuestRoute";
 
+import AdminRoute from "./AdminRoute";
+import AdminPanelLayout from "../layouts/AdminPanelLayout";
+
+import AdminSectionPage from "../pages/admin/AdminSectionPage";
+import RoomManagementPage from "../pages/admin/RoomManagementPage";
+import TopicManagementPage from "../pages/admin/TopicManagementPage";
+import UserManagementPage from "../pages/admin/UserManagementPage";
+
 function AppRoutes() {
 
     return (
@@ -49,6 +57,32 @@ function AppRoutes() {
                     <Route path="/profile/edit" element={<EditProfilePage />} />
                 </Route>
             </Route>
+            
+            {/* Root admin pages — dedicated full-page layout */}
+            <Route element={<AdminRoute />}>
+                <Route element={<AdminPanelLayout />}>
+                    <Route
+                        path="/admin/dashboard"
+                        element={<AdminSectionPage/>}
+                    />
+
+                    <Route
+                        path="/admin/rooms"
+                        element={<RoomManagementPage />}
+                    />
+
+                    <Route
+                        path="/admin/topics"
+                        element={<TopicManagementPage />}
+                    />
+
+                    <Route
+                        path="/admin/users"
+                        element={<UserManagementPage />}
+                    />
+                </Route>
+            </Route>
+
 
             {/* 404 */}
             <Route path="*" element={<NotFoundPage />} />

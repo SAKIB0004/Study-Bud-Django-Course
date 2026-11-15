@@ -6,8 +6,9 @@ import activityService from "../services/api/activityService";
 
 import RoomCard from "../components/rooms/RoomCard";
 import ActivityList from "../components/activities/ActivityList";
-import TopicsSidebar from "../components/topics/TopicsSidebar";
+import LeftSidebar from "../components/layout/LeftSidebar";
 import RightSidebar from "../components/layout/RightSidebar";
+import { getRoomTopicIds, roomHasTopic } from "../utils/roomTopics";
 
 import useAuth from "../hooks/useAuth";
 
@@ -40,29 +41,28 @@ function HomePage() {
         const roomName = room.name?.toLowerCase() || "";
         const description = room.description?.toLowerCase() || "";
 
-        // Handle both topic ID and nested topic object
-        const roomTopicId =
-            typeof room.topic === "object"
-                ? room.topic?.id
-                : room.topic;
-
-        // Find the topic name
-        const selectedTopic = topics.find(
-            (topic) => String(topic.id) === String(roomTopicId)
-        );
-
-        const topicName = selectedTopic?.name?.toLowerCase() || "";
+        const topicNames = Array.isArray(room.topic_names)
+            ? room.topic_names
+            : getRoomTopicIds(room)
+                .map((topicId) =>
+                    topics.find(
+                        (topic) => String(topic.id) === String(topicId)
+                    )?.name
+                )
+                .filter(Boolean);
 
         // Search matching
         const matchesSearch =
             roomName.includes(search) ||
             description.includes(search) ||
-            topicName.includes(search);
+            topicNames.some((topicName) =>
+                topicName.toLowerCase().includes(search)
+            );
 
         // Topic matching
         const matchesTopic =
             !selectedTopicId ||
-            String(roomTopicId) === String(selectedTopicId);
+            roomHasTopic(room, selectedTopicId);
 
         return matchesSearch && matchesTopic;
     });
@@ -161,7 +161,7 @@ function HomePage() {
             <div className="home-page-layout">
 
                 {/* LEFT COLUMN: TOPICS */}
-                <TopicsSidebar topics={topics} rooms={rooms}/>
+                <LeftSidebar  topics={topics} rooms={rooms}/>
 
 
                 {/* MIDDLE COLUMN: ROOM FEED */}
@@ -195,21 +195,10 @@ function HomePage() {
                         {filteredRooms.length > 0 ? (
 
                             filteredRooms.map((room) => {
-
-                                const topicId =
-                                    typeof room.topic === "object"
-                                        ? room.topic?.id
-                                        : room.topic;
-
                                 const hostId =
                                     typeof room.host === "object"
                                         ? room.host?.id
                                         : room.host;
-
-                                const selectedTopic = topics.find(
-                                    (topic) =>
-                                        String(topic.id) === String(topicId)
-                                );
 
                                 const selectedHost = users.find(
                                     (user) =>
@@ -220,7 +209,6 @@ function HomePage() {
                                     <RoomCard
                                         key={room.id}
                                         room={room}
-                                        topicName={ selectedTopic?.name || "Unknown Topic" }
                                         host={selectedHost}
                                     />
                                 );

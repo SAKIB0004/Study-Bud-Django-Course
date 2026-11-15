@@ -11,6 +11,7 @@ import TopicsSidebar from "../components/topics/TopicsSidebar";
 import RightSidebar from "../components/layout/RightSidebar";
 import formatRelativeTime from "../utils/formatRelativeTime";
 import getImageUrl from "../utils/getImageUrl";
+import { getRoomTopicIds } from "../utils/roomTopics";
 
 function RoomDetailPage() {
     const { id } = useParams();
@@ -205,15 +206,10 @@ function RoomDetailPage() {
 
     const isRoomHost = isAuthenticated && user && String(user.id) === String(hostId);
 
-    // Resolve topic ID
-    const topicId =
-        typeof room.topic === "object"
-            ? room.topic?.id
-            : room.topic;
-
-    const topic = topics.find(
-        (item) => String(item.id) === String(topicId)
-    );
+    const topicNames = Array.isArray(room.topic_names)
+        ? room.topic_names
+        : [];
+    const topicIds = getRoomTopicIds(room);
 
     // Resolve message author
     const getMessageUser = (message) => {
@@ -236,7 +232,7 @@ function RoomDetailPage() {
                 <TopicsSidebar
                     topics={topics}
                     rooms={rooms}
-                    currentTopicId={topicId}
+                    currentTopicId={topicIds[0] ?? null}
                 />
 
                 {/* MIDDLE: Main room content */}
@@ -330,11 +326,13 @@ function RoomDetailPage() {
 
                         </div>
 
-                        {/* Topic */}
+                        {/* Topics */}
                         <div className="room-topic-section">
 
                             <span>
-                                {topic?.name || "Unknown Topic"}
+                                {topicNames.length > 0
+                                    ? topicNames.join(", ")
+                                    : "No topics"}
                             </span>
 
                         </div>

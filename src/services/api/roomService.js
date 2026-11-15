@@ -76,6 +76,38 @@ const roomService = {
         return response.data;
     },
 
+
+    // Fetch rooms for admin management with search and filters
+    async getAdminRooms(limit = 25, cursor = null, filters = {}) {
+        const params = { limit };
+
+        if (cursor) {
+            params.cursor = cursor;
+        }
+
+        if (filters.search) {
+            params.search = filters.search;
+        }
+
+        if (filters.topic) {
+            params.topic = filters.topic;
+        }
+
+        if (filters.host) {
+            params.host = filters.host;
+        }
+
+        const response = await api.get("/admin/rooms/", { params });
+
+        return response.data;
+    },
+
+    // Create a room as Root Admin
+    async createAdminRoom(roomData) {
+        const response = await api.post("/admin/create-room/", roomData);
+        return response.data;
+    },
+
 };
 
 export default roomService;

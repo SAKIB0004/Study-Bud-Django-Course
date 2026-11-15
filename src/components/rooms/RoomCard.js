@@ -1,15 +1,20 @@
+
 import { Link } from "react-router-dom";
 import formatRelativeTime from "../../utils/formatRelativeTime";
 import ProfileAvatar from "../profile/ProfileAvatar";
 
-
-function RoomCard({ room, topicName, host }) {
+function RoomCard({ room, host }) {
 
     // Calculate the number of participants
     const participantCount = Array.isArray(room.participants)
         ? room.participants.length
         : 0;
-    
+
+    // Get all topic names associated with this room
+    const topicNames = Array.isArray(room.topic_names)
+        ? room.topic_names
+        : [];
+
     return (
         <div className="room-card">
 
@@ -44,14 +49,18 @@ function RoomCard({ room, topicName, host }) {
                 </Link>
             </h3>
 
-            {/* Participant count and topic */}
+            {/* Participant count and topics */}
             <div className="room-card-footer">
 
                 <Link to={`/room/${room.id}/`}>
                     {participantCount} Joined
                 </Link>
 
-                <span>{topicName}</span>
+                <span>
+                    {topicNames.length > 0
+                        ? topicNames.join(", ")
+                        : "No topics"}
+                </span>
 
             </div>
 

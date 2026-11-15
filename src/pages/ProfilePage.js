@@ -272,20 +272,10 @@ function ProfilePage() {
                         {rooms.length > 0 ? (
 
                             rooms.map((room) => {
-
-                                const topicId =
-                                    typeof room.topic === "object"
-                                        ? room.topic?.id
-                                        : room.topic;
-
                                 const hostId =
                                     typeof room.host === "object"
                                         ? room.host?.id
                                         : room.host;
-
-                                const selectedTopic = topics.find(
-                                    (topic) => String(topic.id) === String(topicId)
-                                );
 
                                 const selectedHost = users.find(
                                     (user) => String(user.id) === String(hostId)
@@ -295,7 +285,6 @@ function ProfilePage() {
                                     <RoomCard
                                         key={room.id}
                                         room={room}
-                                        topicName={ selectedTopic?.name || "Unknown Topic"}
                                         host={selectedHost || profile}
                                     />
                                 );

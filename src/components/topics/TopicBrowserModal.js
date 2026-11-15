@@ -1,6 +1,7 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { countRoomsForTopic } from "../../utils/roomTopics";
 
 function TopicBrowserModal({
     isOpen,
@@ -12,20 +13,10 @@ function TopicBrowserModal({
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState("");
 
-    const getTopicRoomCount = (topicId) => {
-        return rooms.filter((room) => {
-            const roomTopicId =
-                typeof room.topic === "object"
-                    ? room.topic?.id
-                    : room.topic;
-
-            return String(roomTopicId) === String(topicId);
-        }).length;
-    };
-
     const sortedTopics = useMemo(() => {
         return [...topics].sort((a, b) => {
-            return getTopicRoomCount(b.id) - getTopicRoomCount(a.id);
+            return countRoomsForTopic(rooms, b.id) -
+                countRoomsForTopic(rooms, a.id);
         });
     }, [topics, rooms]);
 
@@ -74,7 +65,10 @@ function TopicBrowserModal({
                         className={`topic-modal-item ${
                             !selectedTopicId ? "active" : ""
                         }`}
-                        onClick={onClose}
+                        onClick={() => {
+                            navigate("/");
+                            onClose();
+                        }}
                     >
                         <span>All Topics</span>
                         <span className="topic-count">{topics.length}</span>
@@ -91,11 +85,12 @@ function TopicBrowserModal({
                             }`}
                             onClick={() => {
                                 navigate(`/?topic=${topic.id}`);
+                                onClose();
                             }}
                         >
                             <span>{topic.name}</span>
                             <span className="topic-count">
-                                {getTopicRoomCount(topic.id)}
+                                {countRoomsForTopic(rooms, topic.id)}
                             </span>
                         </button>
                     ))}
