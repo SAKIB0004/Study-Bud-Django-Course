@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
@@ -22,19 +21,13 @@ import { FaRegCommentDots } from "react-icons/fa";
 
 
 function RoomManagementPage() {
-
-    // =========================================
+  
     // Room data
-    // =========================================
-
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    // =========================================
     // Pagination
-    // =========================================
-
     const [limit, setLimit] = useState(25);
     const [currentBatch, setCurrentBatch] = useState(1);
 
@@ -50,10 +43,7 @@ function RoomManagementPage() {
 
     const requestIdRef = useRef(0);
 
-    // =========================================
     // Room filters
-    // =========================================
-
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -63,10 +53,7 @@ function RoomManagementPage() {
     const [filterTopics, setFilterTopics] = useState([]);
     const [filterUsers, setFilterUsers] = useState([]);
 
-    // =========================================
     // Add Room modal and form
-    // =========================================
-
     const [showAddRoom, setShowAddRoom] = useState(false);
 
     const [users, setUsers] = useState([]);
@@ -83,10 +70,7 @@ function RoomManagementPage() {
     const [addingTopic, setAddingTopic] = useState(false);
     const [formError, setFormError] = useState("");
 
-    // =========================================
     // Messages modal
-    // =========================================
-
     const [showMessages, setShowMessages] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState(null);
 
@@ -94,10 +78,7 @@ function RoomManagementPage() {
     const [messagesLoading, setMessagesLoading] = useState(false);
     const [messagesError, setMessagesError] = useState("");
 
-    // =========================================
     // Fetch rooms
-    // =========================================
-
     const fetchRooms = useCallback(async (cursor = null, batch = 1) => {
 
         const requestId = ++requestIdRef.current;
@@ -150,9 +131,8 @@ function RoomManagementPage() {
         selectedHostFilter,
     ]);
 
-    // =========================================
+
     // Fetch first batch when filters change
-    // =========================================
 
     useEffect(() => {
 
@@ -165,9 +145,7 @@ function RoomManagementPage() {
 
     }, [fetchRooms]);
 
-    // =========================================
     // Load filter dropdown options
-    // =========================================
 
     useEffect(() => {
 
@@ -213,9 +191,7 @@ function RoomManagementPage() {
 
     }, []);
 
-    // =========================================
     // Debounce search
-    // =========================================
 
     useEffect(() => {
 
@@ -227,9 +203,7 @@ function RoomManagementPage() {
 
     }, [searchQuery]);
 
-    // =========================================
     // Filter dropdown options
-    // =========================================
 
     const topicOptions = [
         {
@@ -257,9 +231,7 @@ function RoomManagementPage() {
         })),
     ];
 
-    // =========================================
     // Clear filters
-    // =========================================
 
     const handleClearFilters = () => {
 
@@ -277,9 +249,8 @@ function RoomManagementPage() {
         selectedHostFilter
     );
 
-    // =========================================
+
     // Pagination handlers
-    // =========================================
 
     const handleNext = () => {
 
@@ -307,9 +278,8 @@ function RoomManagementPage() {
         setCurrentBatch(1);
     };
 
-    // =========================================
+    
     // Load Add Room form data
-    // =========================================
 
     useEffect(() => {
 
@@ -377,9 +347,7 @@ function RoomManagementPage() {
 
     }, [showAddRoom]);
 
-    // =========================================
     // Create topic
-    // =========================================
 
     const handleCreateTopic = async (topicName) => {
 
@@ -388,9 +356,7 @@ function RoomManagementPage() {
             setAddingTopic(true);
             setFormError("");
 
-            const createdTopic = await roomService.createTopic({
-                name: topicName,
-            });
+            const createdTopic = await roomService.createTopic({name: topicName,});
 
             setTopics((previousTopics) => [
                 ...previousTopics,
@@ -425,9 +391,7 @@ function RoomManagementPage() {
         }
     };
 
-    // =========================================
     // Reset room form
-    // =========================================
 
     const resetRoomForm = () => {
 
@@ -446,9 +410,7 @@ function RoomManagementPage() {
         resetRoomForm();
     };
 
-    // =========================================
     // Create room
-    // =========================================
 
     const handleAddRoom = async (event) => {
 
@@ -460,9 +422,7 @@ function RoomManagementPage() {
             selectedTopics.length === 0
         ) {
 
-            setFormError(
-                "Please complete all required fields."
-            );
+            setFormError("Please complete all required fields.");
 
             return;
         }
@@ -502,19 +462,12 @@ function RoomManagementPage() {
                 typeof errorData === "object"
             ) {
 
-                const errorMessages = Object.values(errorData)
-                    .flat()
-                    .join(" ");
+                const errorMessages = Object.values(errorData).flat().join(" ");
 
-                setFormError(
-                    errorMessages || "Failed to create room."
-                );
+                setFormError(errorMessages || "Failed to create room.");
 
             } else {
-
-                setFormError(
-                    "Something went wrong. Please try again."
-                );
+                setFormError("Something went wrong. Please try again.");
             }
 
         } finally {
@@ -523,9 +476,7 @@ function RoomManagementPage() {
         }
     };
 
-    // =========================================
     // View room messages
-    // =========================================
 
     const handleViewMessages = (room) => {
 
@@ -544,24 +495,21 @@ function RoomManagementPage() {
         setMessagesError("");
     };
 
-    // =========================================
     // Row numbering
-    // =========================================
 
     const firstRow = rooms.length > 0
         ? (currentBatch - 1) * limit + 1
         : 0;
 
-    // =========================================
+
     // Table columns
-    // =========================================
 
     const roomColumns = [
 
         {
             key: "serial",
             label: "SL",
-            render: (room, index) => firstRow + index,
+            render: (index) => firstRow + index,
         },
 
         {
@@ -572,15 +520,13 @@ function RoomManagementPage() {
         {
             key: "topic_name",
             label: "Topic",
-            render: (room) =>
-                room.topic_names?.join(", ") || "No topic",
+            render: (room) => room.topic_names?.join(", ") || "No topic",
         },
 
         {
             key: "host_name",
             label: "Host",
-            render: (room) =>
-                room.host_name || "No host",
+            render: (room) => room.host_name || "No host",
         },
 
         {
@@ -594,26 +540,18 @@ function RoomManagementPage() {
 
             render: (room) => {
 
-                const participants =
-                    room.participant_details || [];
+                const participants = room.participant_details || [];
 
                 if (participants.length === 0) {
                     return "No participants";
                 }
 
-                const visibleNames = participants
-                    .slice(0, 3)
-                    .map((user) => user.username);
+                const visibleNames = participants.slice(0, 3).map((user) => user.username);
 
-                const remaining =
-                    participants.length - visibleNames.length;
+                const remaining = participants.length - visibleNames.length;
 
                 return (
-                    <span
-                        title={participants
-                            .map((user) => user.username)
-                            .join(", ")}
-                    >
+                    <span title={participants.map((user) => user.username).join(", ")}>
                         {visibleNames.join(", ")}
                         {remaining > 0 && ` +${remaining}`}
                     </span>
@@ -647,9 +585,7 @@ function RoomManagementPage() {
         },
     ];
 
-    // =========================================
     // Render
-    // =========================================
 
     return (
 
@@ -678,23 +614,13 @@ function RoomManagementPage() {
 
             <div className="admin-section-content">
 
-                {/* =====================================
-                    Room count
-                ===================================== */}
+                {/*Room count*/}
 
                 <div className="admin-room-count">
-
-                    <div className="admin-room-count__info">
-                        <p>
-                            Total Rooms: {pagination.count ?? 0}
-                        </p>
-                    </div>
-
+                    <p>Total Rooms: {pagination.count ?? 0}</p>
                 </div>
 
-                {/* =====================================
-                    Search and filters
-                ===================================== */}
+                {/* Search and filters */}
 
                 <div className="admin-filters">
 
@@ -733,15 +659,9 @@ function RoomManagementPage() {
 
                 </div>
 
-                {/* =====================================
-                    Room table
-                ===================================== */}
+                {/* Room table */}
 
-                {loading ? (
-
-                    <AdminLoading message="Loading rooms..." />
-
-                ) : error ? (
+                {loading ? ( <AdminLoading message="Loading rooms..." />) : error ? (
 
                     <AdminErrorState
                         message={error}
@@ -799,9 +719,7 @@ function RoomManagementPage() {
                 loading={loading}
             />
 
-            {/* =====================================
-                Messages Modal
-            ===================================== */}
+            {/* Messages Modal */}
 
             <AdminModal
                 isOpen={showMessages && Boolean(selectedRoom)}
@@ -819,9 +737,7 @@ function RoomManagementPage() {
 
             </AdminModal>
 
-            {/* =====================================
-                Add Room Modal
-            ===================================== */}
+            {/* Add Room Modal */}
 
             <AdminModal
                 isOpen={showAddRoom}
