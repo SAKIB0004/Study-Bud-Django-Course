@@ -1,9 +1,10 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from base.models import (
-    Room,Message,Topic,Role
-)
+# from django.contrib.auth import get_user_model
+from base.models import Room,Message,Topic,Role, User
+
 from base.api.serializers import RoleSerializer
+from .services import create_admin_user
+
 
 class AdminMessageSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
@@ -102,8 +103,6 @@ class AdminRoomSerializer(serializers.ModelSerializer):
     def get_messages_count(self, obj):
         return obj.message_set.count()
 
-User = get_user_model()
-
 
 class AdminUserSerializer(serializers.ModelSerializer):
     role = RoleSerializer(read_only=True)
@@ -111,14 +110,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
     role_id = serializers.PrimaryKeyRelatedField(
         source="role",
         queryset=Role.objects.all(),
-        write_only=True,
-        required=False
-    )
-
-    password = serializers.CharField(
-        write_only=True,
         required=False,
-        min_length=8
+        write_only=True
     )
 
     class Meta:
@@ -134,79 +127,14 @@ class AdminUserSerializer(serializers.ModelSerializer):
             "role_id",
             "is_active",
             "is_superuser",
-            "password",
+            "date_joined",
         ]
 
         read_only_fields = [
             "id",
             "is_superuser",
+            "date_joined",
         ]
 
-    def validate_role_id(self, value):
-        # Never allow ROOT_ADMIN assignment through this endpoint.
-        if value.name == "ROOT_ADMIN":
-            raise serializers.ValidationError(
-                "You cannot assign the ROOT_ADMIN role."
-            )
-
-        return value
-
-    def validate(self, attrs):
-        instance = self.instance
-        request = self.context.get("request")
-
-        if not instance and not attrs.get("password"):
-            raise serializers.ValidationError({
-                "password": "Password is required."
-            })
-
-        if instance:
-            # Protect existing root admin accounts.
-            if (
-                instance.role
-                and instance.role.name == "ROOT_ADMIN"
-                and "role" in attrs
-                and attrs["role"] != instance.role
-            ):
-                raise serializers.ValidationError({
-                    "role_id": "Root admin role cannot be changed."
-                })
-
-            # Prevent self-role changes.
-            if (
-                request
-                and instance.pk == request.user.pk
-                and "role" in attrs
-                and attrs["role"] != instance.role
-            ):
-                raise serializers.ValidationError({
-                    "role_id": "You cannot change your own role."
-                })
-
-        return attrs
-
     def create(self, validated_data):
-        password = validated_data.pop("password")
-
-        # Default role is USER.
-        if "role" not in validated_data:
-            validated_data["role"] = Role.objects.get(name="USER")
-
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-
-        return user
-
-    def update(self, instance, validated_data):
-        password = validated_data.pop("password", None)
-
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-
-        if password:
-            instance.set_password(password)
-
-        instance.save()
-
-        return instance
+        return create_admin_user(validated_data)

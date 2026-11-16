@@ -2,18 +2,24 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
+# from rest_framework.exceptions import ValidationError
+from rest_framework.generics import (
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+)
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 from base.models import User, Room, Topic
 
 from .permissions import IsRootAdmin
 from .serializers import (
-    AdminRoomSerializer,
+    AdminRoomSerializer, AdminUserSerializer
 )
 from .pagination import AdminRoomCursorPagination
-
 from base.api.serializers import TopicSerializer
-from django.db.models import Q
+# from django.db.models import Q
+
+
 
 
 class AdminDashboardView(APIView):
@@ -189,3 +195,33 @@ class AdminTopicListCreateView(APIView):
         )
 
 #User
+
+class AdminUserListCreateView(ListCreateAPIView):
+    queryset = User.objects.select_related("role").all()
+    serializer_class = AdminUserSerializer
+
+    permission_classes = [IsAuthenticated, IsRootAdmin]
+
+    filter_backends = [SearchFilter, OrderingFilter]
+
+    search_fields = [
+        "username",
+        "email",
+        "name",
+    ]
+
+    ordering_fields = [
+        "id",
+        "username",
+        "email",
+        "date_joined",
+    ]
+
+    ordering = ["-date_joined"]
+
+
+class AdminUserDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.select_related("role").all()
+    serializer_class = AdminUserSerializer
+
+    permission_classes = [IsAuthenticated, IsRootAdmin]

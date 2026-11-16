@@ -5,7 +5,10 @@ from .views import (
     AdminDashboardView,
     AdminRoomListView,
     AdminRoomCreateView,
-    AdminTopicListCreateView
+    AdminTopicListCreateView,
+    AdminUserDetailView,
+    AdminUserListCreateView
+
 )
 
 
@@ -21,6 +24,12 @@ urlpatterns = [
 
     # Topic Management
     path("topics/", AdminTopicListCreateView.as_view(), name="admin-topics"),
+
+    #User management
+
+    path("users/", AdminUserListCreateView.as_view(), name="admin-user-list-create"),
+
+    path("users/<int:pk>/", AdminUserDetailView.as_view(), name="admin-user-detail"),
 ]
 
 
