@@ -21,7 +21,6 @@ urlpatterns = [
     path('users-create/', views.create_user),
     path('users/<str:pk>/update/', views.update_user),
 
-
     #Roles
     path('roles/', views.get_roles),
     # path('users/roles/create/', views.create_role),

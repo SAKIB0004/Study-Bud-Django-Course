@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
@@ -119,8 +119,14 @@ def get_roles(request):
 # @permission_classes([IsAuthenticated])
 def get_rooms(request):
     if request.method == 'GET':
-        rooms = Room.objects.all()
+        rooms = Room.objects.select_related('host').prefetch_related(
+            'topics','participants').annotate(
+            participants_total=Count('participants', distinct=True),
+            messages_total=Count('message', distinct=True)
+        ).order_by('-created')
+
         serializer = RoomSerializer(rooms, many=True)
+
         return Response(serializer.data)
 
     # Require authentication T
