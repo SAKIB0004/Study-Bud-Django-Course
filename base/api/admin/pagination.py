@@ -59,3 +59,12 @@ class AdminRoomCursorPagination(CursorPagination):
                 "prev_url": self.get_relative_url(prev_url),
             },
         })
+
+
+class AdminUserCursorPagination(AdminRoomCursorPagination):
+    page_size = 25
+    page_size_query_param = "limit"
+    max_page_size = 100
+
+    cursor_query_param = "cursor"
+    ordering = ("-date_joined", "-pk")

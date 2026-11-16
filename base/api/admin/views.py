@@ -13,9 +13,13 @@ from base.models import User, Room, Topic
 
 from .permissions import IsRootAdmin
 from .serializers import (
-    AdminRoomSerializer, AdminUserSerializer
+    AdminRoomSerializer, AdminUserSerializer, BulkUserUploadSerializer
 )
-from .pagination import AdminRoomCursorPagination
+from .bulk_user_import import (
+    import_users,
+    BulkUserImportError,
+)
+from .pagination import AdminRoomCursorPagination, AdminUserCursorPagination
 from base.api.serializers import TopicSerializer
 # from django.db.models import Q
 
@@ -197,27 +201,40 @@ class AdminTopicListCreateView(APIView):
 #User
 
 class AdminUserListCreateView(ListCreateAPIView):
-    queryset = User.objects.select_related("role").all()
+    # queryset = User.objects.select_related("role").all()
     serializer_class = AdminUserSerializer
-
     permission_classes = [IsAuthenticated, IsRootAdmin]
-
+    pagination_class = AdminUserCursorPagination
     filter_backends = [SearchFilter, OrderingFilter]
 
-    search_fields = [
-        "username",
-        "email",
-        "name",
-    ]
-
-    ordering_fields = [
-        "id",
-        "username",
-        "email",
-        "date_joined",
-    ]
-
+    search_fields = ["username", "email", "name",]
+    ordering_fields = ["id", "username", "email", "date_joined",]
     ordering = ["-date_joined"]
+
+    def get_queryset(self):
+        users = User.objects.select_related("role").all()
+
+        # Filter by role
+        role = self.request.query_params.get("role")
+
+        if role:
+            users = users.filter(role__name=role)
+
+        # Filter by account status
+        is_active = self.request.query_params.get("is_active")
+
+        if is_active in ["true", "false"]:
+            users = users.filter(is_active=(is_active == "true"))
+
+        # Filter by superuser status
+        is_superuser = self.request.query_params.get("is_superuser")
+
+        if is_superuser in ["true", "false"]:
+            users = users.filter(
+                is_superuser=(is_superuser == "true")
+            )
+
+        return users
 
 
 class AdminUserDetailView(RetrieveUpdateDestroyAPIView):
@@ -225,3 +242,36 @@ class AdminUserDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = AdminUserSerializer
 
     permission_classes = [IsAuthenticated, IsRootAdmin]
+
+
+
+class AdminBulkUserCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsRootAdmin]
+
+    def post(self, request):
+        serializer = BulkUserUploadSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "message": "Invalid file upload.",
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        uploaded_file = serializer.validated_data["file"]
+
+        try:
+            result = import_users(uploaded_file)
+
+            return Response(
+                result,
+                status=status.HTTP_200_OK,
+            )
+
+        except BulkUserImportError as exc:
+            return Response(
+                {"message": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )

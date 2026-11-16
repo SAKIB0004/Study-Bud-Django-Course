@@ -138,3 +138,23 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return create_admin_user(validated_data)
+
+
+class BulkUserUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    def validate_file(self, uploaded_file):
+        filename = uploaded_file.name.lower()
+
+        if not filename.endswith((".csv", ".xlsx")):
+            raise serializers.ValidationError(
+                "Only CSV and XLSX files are supported."
+            )
+
+        if uploaded_file.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError(
+                "Maximum file size is 5 MB."
+            )
+
+        return uploaded_file
+

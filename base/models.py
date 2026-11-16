@@ -23,7 +23,7 @@ class User(AbstractUser):
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True,blank=True,related_name="users")
     name = models.CharField(null=True, max_length=255, blank=True)
     email = models.EmailField(unique=True, null=True, blank=True)
-    bio = models.TextField(null=True)
+    bio = models.TextField(null=True, blank=True,)
 
     avatar = models.ImageField(_("Image"), null=True, default="avatar.svg", upload_to=upload_to)
 
