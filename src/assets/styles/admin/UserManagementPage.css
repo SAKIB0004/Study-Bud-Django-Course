@@ -1,0 +1,288 @@
+
+/* User Management Page */
+
+.admin-users-page {
+    width: 100%;
+}
+
+/* Toolbar */
+
+.admin-users-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.admin-users-search {
+    flex: 1;
+    min-width: 180px;
+}
+
+.admin-users-toolbar > * {
+    flex-shrink: 0;
+}
+
+.admin-users-toolbar .admin-users-search {
+    flex-shrink: 1;
+}
+
+/* Create User Button */
+
+.admin-create-user-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+
+    background: var(--primary, #4f46e5);
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.admin-create-user-btn:hover {
+    opacity: 0.9;
+}
+
+/* User Count */
+
+.admin-users-count {
+    margin-bottom: 14px;
+    color: var(--text-secondary, #777);
+    font-size: 14px;
+}
+
+.admin-users-count strong {
+    color: var(--text-primary, #222);
+}
+
+/* User Identity */
+
+.admin-user-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.admin-user-identity strong {
+    color: var(--text-primary, #222);
+}
+
+.admin-user-identity span {
+    color: var(--text-secondary, #777);
+    font-size: 12px;
+}
+
+/* Role */
+
+.admin-user-role {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Actions */
+
+.admin-user-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+
+    border: 1px solid var(--border, #ddd);
+    border-radius: 6px;
+
+    background: transparent;
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+.admin-edit-btn {
+    color: #2563eb;
+}
+
+.admin-edit-btn:hover {
+    background: #eff6ff;
+}
+
+.admin-delete-btn {
+    color: #dc2626;
+}
+
+.admin-delete-btn:hover {
+    background: #fef2f2;
+}
+
+/* Form */
+
+.admin-user-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.admin-form-group label,
+.admin-form-checkbox label {
+    color: var(--text-primary, #333);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-form-group input,
+.admin-form-group textarea,
+.admin-form-group select {
+    width: 100%;
+    padding: 10px 12px;
+
+    border: 1px solid var(--border, #ddd);
+    border-radius: 6px;
+
+    background: var(--surface, #fff);
+    color: var(--text-primary, #222);
+
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.admin-form-group input:focus,
+.admin-form-group textarea:focus,
+.admin-form-group select:focus {
+    outline: none;
+    border-color: var(--primary, #4f46e5);
+}
+
+.admin-form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.admin-form-checkbox input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Form Buttons */
+
+.admin-user-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.admin-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.admin-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.admin-btn-secondary {
+    background: var(--surface-secondary, #eee);
+    color: var(--text-primary, #333);
+}
+
+.admin-btn-primary {
+    background: var(--primary, #4f46e5);
+    color: white;
+}
+
+/* Errors */
+
+.admin-users-error,
+.admin-form-error {
+    padding: 12px 14px;
+    margin-bottom: 16px;
+
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+
+    background: #fef2f2;
+    color: #b91c1c;
+
+    font-size: 14px;
+}
+
+.admin-users-error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.admin-users-error button {
+    border: none;
+    background: transparent;
+    color: #b91c1c;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+    .admin-users-toolbar {
+        align-items: stretch;
+    }
+
+    .admin-users-search {
+        flex-basis: 100%;
+    }
+
+    .admin-create-user-btn {
+        width: 100%;
+    }
+
+    .admin-user-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .admin-user-form-actions button {
+        width: 100%;
+    }
+}
+.admin-superuser-yes {
+    color: #15803d;
+    font-weight: 600;
+}
+
+.admin-superuser-no {
+    color: #64748b;
+    font-weight: 600;
+}

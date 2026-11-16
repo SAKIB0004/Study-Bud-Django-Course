@@ -1381,27 +1381,155 @@
    Admin Filter
 ========================================= */
 
+
+/* Searchable Admin Filter */
+
 .admin-filter {
+    position: relative;
+    min-width: 180px;
+    flex: 1;
+}
+
+.admin-filter > label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.admin-filter-trigger {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 12px;
+
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 10px;
+
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
 }
 
-.admin-filter label,
-.admin-pagination__size label {
+.admin-filter-trigger:hover,
+.admin-filter-trigger.active {
+    border-color: var(--primary);
+}
+
+.admin-filter-trigger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.admin-filter-arrow {
+    font-size: 11px;
+    transition: transform 0.2s ease;
+}
+
+.admin-filter-arrow.rotated {
+    transform: rotate(180deg);
+}
+
+/* Dropdown */
+
+.admin-filter-dropdown {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    width: 100%;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+
+    z-index: 100;
+    overflow: hidden;
+}
+
+/* Dropdown search */
+
+.admin-filter-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+
+    color: var(--text-secondary);
+}
+
+.admin-filter-search input {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    outline: none;
+
+    background: transparent;
+    color: var(--text-primary);
     font-size: 13px;
-    color: var(--text-secondary, #777);
 }
 
-.admin-filter select,
-.admin-pagination__size select {
-    min-height: 38px;
-    padding: 7px 10px;
-    border: 1px solid var(--border, #ddd);
-    border-radius: 6px;
-    background: var(--surface, #fff);
-    color: inherit;
+.admin-filter-search button {
+    display: flex;
+    align-items: center;
+
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
 }
+
+/* Options */
+
+.admin-filter-options {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.admin-filter-option {
+    display: block;
+    width: 100%;
+    padding: 9px 10px;
+
+    border: none;
+    border-radius: 5px;
+
+    background: transparent;
+    color: var(--text-primary);
+
+    text-align: left;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.admin-filter-option:hover {
+    background: var(--background);
+}
+
+.admin-filter-option.selected {
+    background: var(--background);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.admin-filter-no-results {
+    padding: 12px;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-align: center;
+}
+
 
 /* =========================================
    Admin Modal
@@ -1647,6 +1775,117 @@
     color: inherit;
 }
 
+
+
+/* =====================================
+   Admin Filter Search
+===================================== */
+
+.admin-filter-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 12px;
+
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.admin-filter-search svg {
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.admin-filter-search input {
+    width: 100%;
+    min-width: 0;
+
+    padding: 7px 0;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+    color: var(--text-primary);
+
+    font-size: 14px;
+}
+
+.admin-filter-search input::placeholder {
+    color: var(--text-secondary);
+}
+
+.admin-filter-search input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.admin-filter-search button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 4px;
+
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+
+    cursor: pointer;
+}
+
+.admin-filter-search button:hover {
+    color: var(--text-primary);
+}
+
+/* =====================================
+   Room Search Button
+===================================== */
+
+.admin-filter-search-button {
+    width: calc(100% - 20px);
+    margin: 10px;
+
+    padding: 9px 12px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: var(--primary);
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.admin-filter-search-button:hover {
+    /* background: var(--primary-hover); */
+    opacity: 0.8;
+}
+
+.admin-filter-search-button:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+/* =====================================
+   No Search Results
+===================================== */
+
+.admin-filter-no-results {
+    padding: 12px;
+    margin: 0;
+
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-align: center;
+}
+
 /* =========================================
    Admin Status Badge
 ========================================= */
@@ -1724,3 +1963,264 @@
     cursor: not-allowed;
 }
 
+
+
+/* User management toolbar */
+
+.admin-users-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+
+/* Action buttons */
+
+.admin-user-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-action-btn {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.admin-action-btn.edit {
+    color: #2563eb;
+}
+
+.admin-action-btn.edit:hover {
+    background: #eff6ff;
+}
+
+.admin-action-btn.delete {
+    color: #dc2626;
+}
+
+.admin-action-btn.delete:hover {
+    background: #fef2f2;
+}
+
+.admin-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* User form */
+
+.admin-user-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.admin-form-group label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-form-group input:not([type="checkbox"]),
+.admin-form-group textarea,
+.admin-form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.admin-form-group textarea {
+    resize: vertical;
+}
+
+.admin-form-group input:focus,
+.admin-form-group textarea:focus,
+.admin-form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+
+/* Active checkbox */
+
+.admin-form-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+}
+
+.admin-form-checkbox input {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* Form actions */
+
+.admin-user-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+
+/* Buttons */
+
+.admin-primary-btn,
+.admin-secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.admin-primary-btn {
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: white;
+}
+
+.admin-primary-btn:hover {
+    opacity: 0.9;
+}
+
+.admin-secondary-btn {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+}
+
+.admin-secondary-btn:hover {
+    background: var(--background);
+}
+
+.admin-primary-btn:disabled,
+.admin-secondary-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* Responsive */
+
+@media (max-width: 600px) {
+    .admin-users-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-users-toolbar > button {
+        width: 100%;
+    }
+}
+
+/* Confirmation modal */
+
+.admin-confirm-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-confirm-message {
+    color: var(--text-primary);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.admin-confirm-warning {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.admin-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.admin-btn {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.admin-btn-secondary {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+.admin-btn-danger {
+    background: #dc3545;
+    color: #fff;
+}
+
+.admin-btn-primary {
+    background: var(--primary);
+    color: #fff;
+}
+
+.admin-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+.admin-user-count {
+    margin: 16px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.admin-user-count p {
+    margin: 0;
+}
+
+
+.admin-users-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 16px 0;
+}
+
+.admin-user-count {
+    margin: 16px 0;
+}

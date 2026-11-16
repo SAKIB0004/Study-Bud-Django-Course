@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
@@ -7,7 +8,6 @@ import AdminEmptyState from "../../components/admin/common/AdminEmptyState";
 import AdminErrorState from "../../components/admin/common/AdminErrorState";
 import AdminModal from "../../components/admin/common/AdminModal";
 import AdminPagination from "../../components/admin/common/AdminPagination";
-import AdminSearch from "../../components/admin/common/AdminSearch";
 import AdminFilter from "../../components/admin/common/AdminFilter";
 
 import AdminRoomForm from "../../components/admin/rooms/AdminRoomForm";
@@ -19,15 +19,30 @@ import "../../assets/styles/admin/admin-common.css";
 
 import { FaRegCommentDots } from "react-icons/fa";
 
+// Normalize different possible API response formats
+const getListData = (response) => {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.results)) return response.results;
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.data?.results)) return response.data.results;
+
+    return [];
+};
 
 function RoomManagementPage() {
-  
+
+    // =====================================
     // Room data
+    // =====================================
+
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    // =====================================
     // Pagination
+    // =====================================
+
     const [limit, setLimit] = useState(25);
     const [currentBatch, setCurrentBatch] = useState(1);
 
@@ -43,17 +58,38 @@ function RoomManagementPage() {
 
     const requestIdRef = useRef(0);
 
+    // =====================================
     // Room filters
-    const [searchQuery, setSearchQuery] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
+    // =====================================
+
+    // The actual room filter sent to the backend
+    const [selectedRoomFilter, setSelectedRoomFilter] = useState("");
+
+    // The selected dropdown room ID
+    const [selectedRoomOption, setSelectedRoomOption] = useState("");
 
     const [selectedTopic, setSelectedTopic] = useState("");
     const [selectedHostFilter, setSelectedHostFilter] = useState("");
 
+    const [selectedTopicOption, setSelectedTopicOption] = useState("");
+    const [topicSearchInput, setTopicSearchInput] = useState("");
+    const [topicSearchFilter, setTopicSearchFilter] = useState("");
+
+    const [selectedHostOption, setSelectedHostOption] = useState("");
+    const [hostSearchInput, setHostSearchInput] = useState("");
+    const [hostSearchFilter, setHostSearchFilter] = useState("");
+
+    // Complete lists for dropdown options
+    const [filterRooms, setFilterRooms] = useState([]);
     const [filterTopics, setFilterTopics] = useState([]);
     const [filterUsers, setFilterUsers] = useState([]);
+    
+    const [roomSearchInput, setRoomSearchInput] = useState("");
 
+    // =====================================
     // Add Room modal and form
+    // =====================================
+
     const [showAddRoom, setShowAddRoom] = useState(false);
 
     const [users, setUsers] = useState([]);
@@ -70,28 +106,163 @@ function RoomManagementPage() {
     const [addingTopic, setAddingTopic] = useState(false);
     const [formError, setFormError] = useState("");
 
+    // =====================================
     // Messages modal
+    // =====================================
+
     const [showMessages, setShowMessages] = useState(false);
-    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [selectedRoomForMessages, setSelectedRoomForMessages] =
+        useState(null);
 
     const [messages, setMessages] = useState([]);
     const [messagesLoading, setMessagesLoading] = useState(false);
     const [messagesError, setMessagesError] = useState("");
 
+    // =====================================
+    // Dropdown options
+    // =====================================
+
+    // Use unique room IDs as dropdown values
+    const uniqueRooms = Array.from(
+        new Map(
+            filterRooms.map((room) => [String(room.id), room])
+        ).values()
+    );
+
+    const roomOptions = [
+        {
+            value: "",
+            label: "All Rooms",
+            searchText: "all rooms",
+        },
+
+        ...uniqueRooms.map((room) => ({
+            value: String(room.id),
+            label: room.name || `Room ${room.id}`,
+
+            searchText: [
+                room.name,
+                room.host_name,
+                room.host?.name,
+                room.host?.username,
+                ...(room.topic_names || []),
+                ...(room.topics || []).map((topic) => topic.name),
+                room.description,
+            ]
+                .filter(Boolean)
+                .join(" "),
+        })),
+    ];
+
+    const topicOptions = [
+        {
+            value: "",
+            label: "All Topics",
+        },
+
+        ...filterTopics.map((topic) => ({
+            value: String(topic.id),
+            label: topic.name,
+        })),
+    ];
+
+    const hostOptions = [
+        {
+            value: "",
+            label: "All Hosts",
+        },
+
+        ...filterUsers.map((user) => ({
+            value: String(user.id),
+            label:
+                user.name ||
+                user.username ||
+                user.email ||
+                `User ${user.id}`,
+        })),
+    ];
+    const handleTopicSelect = (topicId) => {
+        setSelectedTopicOption(topicId);
+
+        if (!topicId) {
+            setTopicSearchInput("");
+            setTopicSearchFilter("");
+            return;
+        }
+
+        const selectedTopicItem = filterTopics.find(
+            (topic) => String(topic.id) === String(topicId)
+        );
+
+        if (selectedTopicItem) {
+            setTopicSearchInput(selectedTopicItem.name);
+            setTopicSearchFilter(selectedTopicItem.name);
+        }
+    };
+
+    const handleTopicSearch = (searchValue) => {
+        const query = searchValue.trim();
+
+        setSelectedTopicOption("");
+        setTopicSearchInput(query);
+        setTopicSearchFilter(query);
+    };
+
+    const handleHostSelect = (hostId) => {
+        setSelectedHostOption(hostId);
+
+        if (!hostId) {
+            setHostSearchInput("");
+            setHostSearchFilter("");
+            return;
+        }
+
+        const selectedHostItem = filterUsers.find(
+            (user) => String(user.id) === String(hostId)
+        );
+
+        if (selectedHostItem) {
+            const hostName =
+                selectedHostItem.name ||
+                selectedHostItem.username ||
+                selectedHostItem.email ||
+                `User ${selectedHostItem.id}`;
+
+            setHostSearchInput(hostName);
+            setHostSearchFilter(hostName);
+        }
+    };
+
+    const handleHostSearch = (searchValue) => {
+        const query = searchValue.trim();
+
+        setSelectedHostOption("");
+        setHostSearchInput(query);
+        setHostSearchFilter(query);
+    };
+
+
+    // =====================================
     // Fetch rooms
+    // =====================================
+
+
     const fetchRooms = useCallback(async (cursor = null, batch = 1) => {
 
         const requestId = ++requestIdRef.current;
 
         try {
+
             setLoading(true);
             setError("");
 
             const filters = {
-                search: debouncedSearch,
-                topic: selectedTopic,
-                host: selectedHostFilter,
+                room: selectedRoomFilter,
+                topic: topicSearchFilter,
+                host: hostSearchFilter,
             };
+
+            console.log("Admin room filters:", filters);
 
             const response = await roomService.getAdminRooms(
                 limit,
@@ -102,8 +273,18 @@ function RoomManagementPage() {
             // Ignore outdated requests
             if (requestId !== requestIdRef.current) return;
 
-            setRooms(response.data || []);
-            setPagination(response.pagination || {});
+            console.log("Admin room API response:", response);
+
+            setRooms(
+                Array.isArray(response?.data)
+                    ? response.data
+                    : []
+            );
+
+            setPagination(
+                response?.pagination || {}
+            );
+
             setCurrentBatch(batch);
 
         } catch (error) {
@@ -126,26 +307,26 @@ function RoomManagementPage() {
 
     }, [
         limit,
-        debouncedSearch,
-        selectedTopic,
-        selectedHostFilter,
+        selectedRoomFilter,
+        topicSearchFilter,
+        hostSearchFilter,
     ]);
 
 
-    // Fetch first batch when filters change
-
+    // Fetch first page whenever filters or page size change
     useEffect(() => {
 
         fetchRooms(null, 1);
 
         return () => {
-            // Invalidate pending requests
             requestIdRef.current += 1;
         };
 
     }, [fetchRooms]);
 
+    // =====================================
     // Load filter dropdown options
+    // =====================================
 
     useEffect(() => {
 
@@ -155,24 +336,21 @@ function RoomManagementPage() {
 
             try {
 
-                const [usersResponse, topicsResponse] =
-                    await Promise.all([
-                        roomService.getUsers(),
-                        roomService.getTopics(),
-                    ]);
-
-                const usersData = Array.isArray(usersResponse)
-                    ? usersResponse
-                    : usersResponse?.results || [];
-
-                const topicsData = Array.isArray(topicsResponse)
-                    ? topicsResponse
-                    : topicsResponse?.results || [];
+                const [
+                    roomsResponse,
+                    usersResponse,
+                    topicsResponse,
+                ] = await Promise.all([
+                    roomService.getRooms(),
+                    roomService.getUsers(),
+                    roomService.getTopics(),
+                ]);
 
                 if (!isActive) return;
 
-                setFilterUsers(usersData);
-                setFilterTopics(topicsData);
+                setFilterRooms(getListData(roomsResponse));
+                setFilterUsers(getListData(usersResponse));
+                setFilterTopics(getListData(topicsResponse));
 
             } catch (error) {
 
@@ -191,66 +369,78 @@ function RoomManagementPage() {
 
     }, []);
 
-    // Debounce search
+    // =====================================
+    // Handle Room dropdown selection
+    // =====================================
 
-    useEffect(() => {
+    const handleRoomSelect = (roomId) => {
 
-        const timer = setTimeout(() => {
-            setDebouncedSearch(searchQuery.trim());
-        }, 400);
+        setSelectedRoomOption(roomId);
 
-        return () => clearTimeout(timer);
+        if (!roomId) {
+            setSelectedRoomFilter("");
+            setRoomSearchInput("");
+            return;
+        }
 
-    }, [searchQuery]);
+        const selectedRoom = uniqueRooms.find(
+            (room) => String(room.id) === String(roomId)
+        );
 
-    // Filter dropdown options
+        if (selectedRoom) {
+            setSelectedRoomFilter(selectedRoom.name);
+            setRoomSearchInput(selectedRoom.name);
+        }
+    };
 
-    const topicOptions = [
-        {
-            value: "",
-            label: "All Topics",
-        },
-        ...filterTopics.map((topic) => ({
-            value: String(topic.id),
-            label: topic.name,
-        })),
-    ];
+    // =====================================
+    // Handle Room backend search
+    // =====================================
 
-    const hostOptions = [
-        {
-            value: "",
-            label: "All Hosts",
-        },
-        ...filterUsers.map((user) => ({
-            value: String(user.id),
-            label:
-                user.name ||
-                user.username ||
-                user.email ||
-                `User ${user.id}`,
-        })),
-    ];
+    const handleRoomSearch = (searchValue) => {
 
+        const query = searchValue.trim();
+
+        // This is a text search, not a dropdown selection
+        setRoomSearchInput(query);   
+        setSelectedRoomOption("");
+
+        // Backend receives room=django, for example
+        setSelectedRoomFilter(query);
+    };
+
+    // =====================================
     // Clear filters
+    // =====================================
 
     const handleClearFilters = () => {
-
-        setSearchQuery("");
-        setDebouncedSearch("");
+        setSelectedRoomFilter("");
+        setSelectedRoomOption("");
+        setRoomSearchInput("");
 
         setSelectedTopic("");
+        setSelectedTopicOption("");
+        setTopicSearchInput("");
+        setTopicSearchFilter("");
+
         setSelectedHostFilter("");
+        setSelectedHostOption("");
+        setHostSearchInput("");
+        setHostSearchFilter("");
     };
 
     const hasActiveFilters = Boolean(
-        searchQuery.trim() ||
-        debouncedSearch ||
-        selectedTopic ||
-        selectedHostFilter
+        selectedRoomFilter ||
+        selectedRoomOption ||
+        topicSearchFilter ||
+        selectedTopicOption ||
+        hostSearchFilter ||
+        selectedHostOption
     );
 
-
+    // =====================================
     // Pagination handlers
+    // =====================================
 
     const handleNext = () => {
 
@@ -278,8 +468,9 @@ function RoomManagementPage() {
         setCurrentBatch(1);
     };
 
-    
+    // =====================================
     // Load Add Room form data
+    // =====================================
 
     useEffect(() => {
 
@@ -300,13 +491,8 @@ function RoomManagementPage() {
                         roomService.getTopics(),
                     ]);
 
-                const usersData = Array.isArray(usersResponse)
-                    ? usersResponse
-                    : usersResponse?.results || [];
-
-                const topicsData = Array.isArray(topicsResponse)
-                    ? topicsResponse
-                    : topicsResponse?.results || [];
+                const usersData = getListData(usersResponse);
+                const topicsData = getListData(topicsResponse);
 
                 if (isActive) {
 
@@ -347,7 +533,9 @@ function RoomManagementPage() {
 
     }, [showAddRoom]);
 
+    // =====================================
     // Create topic
+    // =====================================
 
     const handleCreateTopic = async (topicName) => {
 
@@ -356,14 +544,16 @@ function RoomManagementPage() {
             setAddingTopic(true);
             setFormError("");
 
-            const createdTopic = await roomService.createTopic({name: topicName,});
+            const createdTopic = await roomService.createTopic({
+                name: topicName,
+            });
 
             setTopics((previousTopics) => [
                 ...previousTopics,
                 createdTopic,
             ]);
 
-            // Also update the filter options
+            // Update Topic filter dropdown too
             setFilterTopics((previousTopics) => [
                 ...previousTopics,
                 createdTopic,
@@ -391,7 +581,9 @@ function RoomManagementPage() {
         }
     };
 
+    // =====================================
     // Reset room form
+    // =====================================
 
     const resetRoomForm = () => {
 
@@ -410,7 +602,9 @@ function RoomManagementPage() {
         resetRoomForm();
     };
 
+    // =====================================
     // Create room
+    // =====================================
 
     const handleAddRoom = async (event) => {
 
@@ -423,7 +617,6 @@ function RoomManagementPage() {
         ) {
 
             setFormError("Please complete all required fields.");
-
             return;
         }
 
@@ -444,8 +637,13 @@ function RoomManagementPage() {
             resetRoomForm();
             setShowAddRoom(false);
 
-            // Refresh first batch
+            // Refresh room table
             await fetchRooms(null, 1);
+
+            // Refresh Room dropdown options
+            const roomsResponse = await roomService.getRooms();
+
+            setFilterRooms(getListData(roomsResponse));
 
         } catch (error) {
 
@@ -462,11 +660,16 @@ function RoomManagementPage() {
                 typeof errorData === "object"
             ) {
 
-                const errorMessages = Object.values(errorData).flat().join(" ");
+                const errorMessages = Object.values(errorData)
+                    .flat()
+                    .join(" ");
 
-                setFormError(errorMessages || "Failed to create room.");
+                setFormError(
+                    errorMessages || "Failed to create room."
+                );
 
             } else {
+
                 setFormError("Something went wrong. Please try again.");
             }
 
@@ -476,11 +679,13 @@ function RoomManagementPage() {
         }
     };
 
+    // =====================================
     // View room messages
+    // =====================================
 
     const handleViewMessages = (room) => {
 
-        setSelectedRoom(room);
+        setSelectedRoomForMessages(room);
         setMessages(room.messages || []);
         setMessagesError("");
         setMessagesLoading(false);
@@ -490,26 +695,29 @@ function RoomManagementPage() {
     const handleCloseMessages = () => {
 
         setShowMessages(false);
-        setSelectedRoom(null);
+        setSelectedRoomForMessages(null);
         setMessages([]);
         setMessagesError("");
     };
 
+    // =====================================
     // Row numbering
+    // =====================================
 
     const firstRow = rooms.length > 0
         ? (currentBatch - 1) * limit + 1
         : 0;
 
-
+    // =====================================
     // Table columns
+    // =====================================
 
     const roomColumns = [
 
         {
             key: "serial",
             label: "SL",
-            render: (index) => firstRow + index,
+            render: (room, index) => firstRow + index,
         },
 
         {
@@ -520,7 +728,8 @@ function RoomManagementPage() {
         {
             key: "topic_name",
             label: "Topic",
-            render: (room) => room.topic_names?.join(", ") || "No topic",
+            render: (room) =>
+                room.topic_names?.join(", ") || "No topic",
         },
 
         {
@@ -546,12 +755,19 @@ function RoomManagementPage() {
                     return "No participants";
                 }
 
-                const visibleNames = participants.slice(0, 3).map((user) => user.username);
+                const visibleNames = participants
+                    .slice(0, 3)
+                    .map((user) => user.username);
 
-                const remaining = participants.length - visibleNames.length;
+                const remaining =
+                    participants.length - visibleNames.length;
 
                 return (
-                    <span title={participants.map((user) => user.username).join(", ")}>
+                    <span
+                        title={participants
+                            .map((user) => user.username)
+                            .join(", ")}
+                    >
                         {visibleNames.join(", ")}
                         {remaining > 0 && ` +${remaining}`}
                     </span>
@@ -585,7 +801,9 @@ function RoomManagementPage() {
         },
     ];
 
+    // =====================================
     // Render
+    // =====================================
 
     return (
 
@@ -614,39 +832,52 @@ function RoomManagementPage() {
 
             <div className="admin-section-content">
 
-                {/*Room count*/}
+                
 
-                <div className="admin-room-count">
-                    <p>Total Rooms: {pagination.count ?? 0}</p>
-                </div>
-
-                {/* Search and filters */}
+                {/* Searchable filters */}
 
                 <div className="admin-filters">
 
-                    <div className="admin-filter-search">
+                    {/* Room dropdown + backend search */}
 
-                        <AdminSearch
-                            value={searchQuery}
-                            onChange={setSearchQuery}
-                            placeholder="Search rooms by name..."
-                        />
+                    <AdminFilter
+                        label="Room"
+                        value={selectedRoomOption}
+                        displayValue={roomSearchInput}
+                        emptyLabel="All Rooms"
+                        onChange={handleRoomSelect}
+                        options={roomOptions}
+                        searchPlaceholder="Search rooms..."
+                        onSearch={handleRoomSearch}
+                    />
 
-                    </div>
+                    {/* Topic dropdown */}
 
                     <AdminFilter
                         label="Topic"
-                        value={selectedTopic}
-                        onChange={setSelectedTopic}
+                        value={selectedTopicOption}
+                        displayValue={topicSearchInput}
+                        emptyLabel="All Topics"
+                        onChange={handleTopicSelect}
                         options={topicOptions}
+                        searchPlaceholder="Search topics..."
+                        onSearch={handleTopicSearch}
                     />
+
+                    {/* Host dropdown */}
 
                     <AdminFilter
                         label="Host"
-                        value={selectedHostFilter}
-                        onChange={setSelectedHostFilter}
+                        value={selectedHostOption}
+                        displayValue={hostSearchInput}
+                        emptyLabel="All Hosts"
+                        onChange={handleHostSelect}
                         options={hostOptions}
+                        searchPlaceholder="Search hosts..."
+                        onSearch={handleHostSearch}
                     />
+
+                    {/* Clear filters */}
 
                     <button
                         type="button"
@@ -659,9 +890,19 @@ function RoomManagementPage() {
 
                 </div>
 
+                {/* Room count */}
+
+                <div className="admin-room-count">
+                    <p>Total Rooms: {pagination.count ?? 0}</p>
+                </div>
+
                 {/* Room table */}
 
-                {loading ? ( <AdminLoading message="Loading rooms..." />) : error ? (
+                {loading ? (
+
+                    <AdminLoading message="Loading rooms..." />
+
+                ) : error ? (
 
                     <AdminErrorState
                         message={error}
@@ -678,7 +919,7 @@ function RoomManagementPage() {
                         }
                         message={
                             hasActiveFilters
-                                ? "Try changing your search or filters."
+                                ? "Try changing your filters."
                                 : "There are currently no rooms to display."
                         }
                         action={
@@ -705,9 +946,7 @@ function RoomManagementPage() {
 
             </div>
 
-            {/* =====================================
-                Pagination
-            ===================================== */}
+            {/* Pagination */}
 
             <AdminPagination
                 pageSize={limit}
@@ -722,9 +961,12 @@ function RoomManagementPage() {
             {/* Messages Modal */}
 
             <AdminModal
-                isOpen={showMessages && Boolean(selectedRoom)}
+                isOpen={
+                    showMessages &&
+                    Boolean(selectedRoomForMessages)
+                }
                 onClose={handleCloseMessages}
-                title={`${selectedRoom?.name || "Room"} - Messages`}
+                title={`${selectedRoomForMessages?.name || "Room"} - Messages`}
             >
 
                 <p>{messages.length} messages</p>
