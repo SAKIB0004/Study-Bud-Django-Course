@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
-
+import { FaFileExcel } from "react-icons/fa";
 import adminUserService from "../../../services/api/adminUserService";
+import generateUserImportTemplate from "../../../utils/generateUserImportTemplate";
+
 import "../../../assets/styles/admin/BulkUserImportModal.css";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -141,6 +143,25 @@ function BulkUserImportModal({ onClose, onSuccess }) {
                             <li>Required columns: name, username, email</li>
                             <li>Optional columns: is_active, role, is_superuser</li>
                         </ul>
+
+                        <div className="bulk-import-template">
+                            <div>
+                                <h4>Need a template?</h4>
+                                <p>
+                                    Download our sample Excel file to follow the
+                                    correct import format.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="bulk-import-download-btn"
+                                onClick={generateUserImportTemplate}
+                            >
+                                <FaFileExcel />
+                                Download XLSX Template
+                            </button>
+                        </div>
                     </div>
 
                     {!result && (

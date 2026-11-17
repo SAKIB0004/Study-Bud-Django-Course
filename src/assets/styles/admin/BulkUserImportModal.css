@@ -242,3 +242,52 @@
         padding: 14px 18px;
     }
 }
+.bulk-import-template {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    margin-top: 16px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.bulk-import-template h4 {
+    margin: 0 0 5px;
+    font-size: 14px;
+}
+
+.bulk-import-template p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.bulk-import-download-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.bulk-import-download-btn:hover {
+    background: var(--background);
+}
+
+@media (max-width: 600px) {
+    .bulk-import-template {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
