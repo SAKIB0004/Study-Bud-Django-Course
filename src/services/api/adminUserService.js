@@ -44,6 +44,15 @@ const adminUserService = {
         const response = await api.delete(`/admin/users/${userId}/`);
         return response.data;
     },
+
+    async bulkImportUsers(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await api.post("/admin/users/bulk-create/",formData);
+        return response.data;
+    },
 };
+
 
 export default adminUserService;

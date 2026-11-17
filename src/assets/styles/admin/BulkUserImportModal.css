@@ -1,0 +1,244 @@
+
+.bulk-import-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.bulk-import-modal {
+    width: 100%;
+    max-width: 650px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface, #fff);
+    color: var(--text, #1f2937);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.bulk-import-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.bulk-import-header h2 {
+    margin: 0 0 6px;
+    font-size: 20px;
+}
+
+.bulk-import-header p {
+    margin: 0;
+    color: var(--text-secondary, #6b7280);
+    font-size: 14px;
+}
+
+.bulk-import-close {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary, #6b7280);
+    font-size: 26px;
+    cursor: pointer;
+}
+
+.bulk-import-body {
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.bulk-import-instructions {
+    padding: 16px;
+    margin-bottom: 22px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+    background: var(--background, #f9fafb);
+}
+
+.bulk-import-instructions h4,
+.bulk-import-error-list h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+}
+
+.bulk-import-instructions ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text-secondary, #6b7280);
+    font-size: 13px;
+    line-height: 1.9;
+}
+
+.bulk-import-file label {
+    display: block;
+    margin-bottom: 9px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.bulk-import-file input {
+    width: 100%;
+    padding: 12px;
+    border: 1px dashed var(--border, #d1d5db);
+    border-radius: 8px;
+    background: var(--background, #fff);
+}
+
+.bulk-import-selected-file {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--background, #f3f4f6);
+    font-size: 13px;
+}
+
+.bulk-import-error {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    color: #b91c1c;
+    background: #fef2f2;
+    font-size: 13px;
+}
+
+.bulk-import-results {
+    margin-top: 22px;
+}
+
+.bulk-import-results > h4 {
+    margin: 0 0 12px;
+}
+
+.bulk-import-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.bulk-import-summary > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 14px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+}
+
+.bulk-import-summary strong {
+    font-size: 23px;
+}
+
+.bulk-import-summary span {
+    color: var(--text-secondary, #6b7280);
+    font-size: 12px;
+}
+
+.bulk-import-error-list {
+    margin-top: 22px;
+}
+
+.bulk-import-error-table {
+    max-height: 220px;
+    overflow: auto;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+}
+
+.bulk-import-error-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.bulk-import-error-table th,
+.bulk-import-error-table td {
+    padding: 10px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.bulk-import-error-table th {
+    position: sticky;
+    top: 0;
+    background: var(--background, #f9fafb);
+}
+
+.bulk-import-footer {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 18px 24px;
+    border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.bulk-import-footer button {
+    padding: 10px 16px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.bulk-import-primary {
+    border: 1px solid var(--primary, #2563eb);
+    background: var(--primary, #2563eb);
+    color: white;
+}
+
+.bulk-import-secondary {
+    border: 1px solid var(--border, #d1d5db);
+    background: transparent;
+    color: var(--text, #374151);
+}
+
+.bulk-import-footer button:disabled,
+.bulk-import-close:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+    .bulk-import-overlay {
+        padding: 10px;
+    }
+
+    .bulk-import-modal {
+        max-height: 95vh;
+    }
+
+    .bulk-import-header,
+    .bulk-import-body {
+        padding: 18px;
+    }
+
+    .bulk-import-summary {
+        gap: 7px;
+    }
+
+    .bulk-import-summary > div {
+        padding: 10px;
+    }
+
+    .bulk-import-summary strong {
+        font-size: 19px;
+    }
+
+    .bulk-import-footer {
+        padding: 14px 18px;
+    }
+}

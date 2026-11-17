@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaPlus, FaEdit, FaTrashAlt } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrashAlt, FaFileImport  } from "react-icons/fa";
 
 import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
 import AdminTable from "../../components/admin/common/AdminTable";
@@ -9,6 +9,7 @@ import AdminFilter from "../../components/admin/common/AdminFilter";
 import AdminPagination from "../../components/admin/common/AdminPagination";
 import AdminStatusBadge from "../../components/admin/common/AdminStatusBadge";
 import AdminConfirmModal from "../../components/admin/common/AdminConfirmModal";
+import BulkUserImportModal from "../../components/admin/common/BulkUserImportModal";
 
 import adminUserService from "../../services/api/adminUserService";
 
@@ -89,10 +90,16 @@ function UserManagementPage() {
     // Refresh trigger
     const [refreshKey, setRefreshKey] = useState(0);
 
+    // Bulk upload 
+    const [showBulkImport, setShowBulkImport] = useState(false);
 
-    // --------------------------------
+    const handleRefreshUsers = () => {
+        setCursor(null);
+        setRefreshKey((previous) => previous + 1);
+    };
+
+   
     // Fetch Users
-    // --------------------------------
 
     useEffect(() => {
         let isMounted = true;
@@ -161,9 +168,7 @@ function UserManagementPage() {
     ]);
 
 
-    // --------------------------------
     // Search and Filters
-    // --------------------------------
 
     const handleSearch = (value) => {
         setSearch(value);
@@ -518,12 +523,22 @@ function UserManagementPage() {
 
                 <button
                     type="button"
+                    className="admin-btn admin-btn-secondary"
+                    onClick={() => setShowBulkImport(true)}
+                >
+                    <FaFileImport />
+                    <span>Import Users</span>
+                </button>
+
+                <button
+                    type="button"
                     className="admin-create-user-btn"
                     onClick={handleOpenCreateModal}
                 >
                     <FaPlus />
                     <span>Create User</span>
                 </button>
+                
 
             </div>
 
@@ -712,6 +727,13 @@ function UserManagementPage() {
                 loading={deletingUserId !== null}
                 confirmVariant="danger"
             />
+
+            {showBulkImport && (
+                <BulkUserImportModal
+                    onClose={() => setShowBulkImport(false)}
+                    onSuccess={handleRefreshUsers}
+                />
+            )}
 
         </div>
     );
