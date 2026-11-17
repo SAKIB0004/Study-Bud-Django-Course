@@ -2,7 +2,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-# from rest_framework.exceptions import ValidationError
 from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
@@ -21,8 +20,6 @@ from .bulk_user_import import (
 )
 from .pagination import AdminRoomCursorPagination, AdminUserCursorPagination
 from base.api.serializers import TopicSerializer
-# from django.db.models import Q
-
 
 
 
@@ -52,17 +49,9 @@ class AdminRoomListView(APIView):
     permission_classes = [IsAuthenticated, IsRootAdmin]
 
     def get(self, request):
-        rooms = Room.objects.select_related(
-            "host"
-        ).prefetch_related(
-            "topics",
-            "participants",
-            "message_set__user",
+        rooms = (Room.objects.select_related("host").prefetch_related(
+            "topics", "participants", "message_set__user",)
         )
-
-        # =====================================
-        # Search by room name
-        # =====================================
 
         # Search by room ID or room name
         room_filter = request.query_params.get("room", "").strip()
@@ -71,74 +60,36 @@ class AdminRoomListView(APIView):
             if room_filter.isdigit():
                 rooms = rooms.filter(id=room_filter)
             else:
-                rooms = rooms.filter(
-                    name__icontains=room_filter
-                )
+                rooms = rooms.filter(name__icontains=room_filter)
 
-        # =====================================
         # Search by topic name or filter by ID
-        # =====================================
-
-        topic_filter = request.query_params.get(
-            "topic", ""
-        ).strip()
+        topic_filter = request.query_params.get("topic", "").strip()
 
         if topic_filter:
             if topic_filter.isdigit():
-                rooms = rooms.filter(
-                    topics__id=topic_filter
-                )
+                rooms = rooms.filter(topics__id=topic_filter)
             else:
-                rooms = rooms.filter(
-                    topics__name__icontains=topic_filter
-                )
+                rooms = rooms.filter(topics__name__icontains=topic_filter)
 
-        # =====================================
         # Search by host username or filter by ID
-        # =====================================
-
-        host_filter = request.query_params.get(
-            "host", ""
-        ).strip()
+        host_filter = request.query_params.get("host", "").strip()
 
         if host_filter:
             if host_filter.isdigit():
-                rooms = rooms.filter(
-                    host_id=host_filter
-                )
+                rooms = rooms.filter(host_id=host_filter)
             else:
-                rooms = rooms.filter(
-                    host__username__icontains=host_filter
-                )
+                rooms = rooms.filter(host__username__icontains=host_filter)
 
-        # =====================================
         # Remove duplicates and order results
-        # =====================================
+        rooms = rooms.distinct().order_by("-created", "-pk")
 
-        rooms = rooms.distinct().order_by(
-            "-created", "-pk"
-        )
-
-        # =====================================
         # Pagination
-        # =====================================
-
         paginator = AdminRoomCursorPagination()
+        paginated_rooms = paginator.paginate_queryset(rooms, request, view=self)
 
-        paginated_rooms = paginator.paginate_queryset(
-            rooms,
-            request,
-            view=self
-        )
+        serializer = AdminRoomSerializer(paginated_rooms, many=True)
 
-        serializer = AdminRoomSerializer(
-            paginated_rooms,
-            many=True
-        )
-
-        return paginator.get_paginated_response(
-            serializer.data
-        )
+        return paginator.get_paginated_response(serializer.data)
 
 class AdminRoomCreateView(APIView):
 
@@ -146,22 +97,14 @@ class AdminRoomCreateView(APIView):
 
     def post(self, request):
 
-        serializer = AdminRoomSerializer(
-            data=request.data
-        )
+        serializer = AdminRoomSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
 
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #Topic
 class AdminTopicListCreateView(APIView):
@@ -172,13 +115,9 @@ class AdminTopicListCreateView(APIView):
     def get(self, request):
 
         topics = Topic.objects.all().order_by("name")
-
         serializer = TopicSerializer(topics, many=True)
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK
-        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     # POST: Create a new topic
     def post(self, request):
@@ -188,20 +127,13 @@ class AdminTopicListCreateView(APIView):
         if serializer.is_valid():
             serializer.save()
 
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #User
 
 class AdminUserListCreateView(ListCreateAPIView):
-    # queryset = User.objects.select_related("role").all()
     serializer_class = AdminUserSerializer
     permission_classes = [IsAuthenticated, IsRootAdmin]
     pagination_class = AdminUserCursorPagination
@@ -230,9 +162,7 @@ class AdminUserListCreateView(ListCreateAPIView):
         is_superuser = self.request.query_params.get("is_superuser")
 
         if is_superuser in ["true", "false"]:
-            users = users.filter(
-                is_superuser=(is_superuser == "true")
-            )
+            users = users.filter( is_superuser=(is_superuser == "true"))
 
         return users
 
@@ -242,7 +172,6 @@ class AdminUserDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = AdminUserSerializer
 
     permission_classes = [IsAuthenticated, IsRootAdmin]
-
 
 
 class AdminBulkUserCreateView(APIView):
@@ -264,14 +193,7 @@ class AdminBulkUserCreateView(APIView):
 
         try:
             result = import_users(uploaded_file)
-
-            return Response(
-                result,
-                status=status.HTTP_200_OK,
-            )
+            return Response(result,status=status.HTTP_200_OK, )
 
         except BulkUserImportError as exc:
-            return Response(
-                {"message": str(exc)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST,)

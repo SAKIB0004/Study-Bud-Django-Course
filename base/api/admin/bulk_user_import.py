@@ -1,4 +1,3 @@
-
 import csv
 import io
 
@@ -52,26 +51,18 @@ def normalize_headers(raw_headers):
     ]
 
     if not headers or any(not header for header in headers):
-        raise BulkUserImportError(
-            "Column names cannot be empty."
-        )
+        raise BulkUserImportError("Column names cannot be empty.")
 
     if len(headers) != len(set(headers)):
-        raise BulkUserImportError(
-            "Duplicate column names are not allowed."
-        )
+        raise BulkUserImportError( "Duplicate column names are not allowed.")
 
     if not REQUIRED_COLUMNS.issubset(set(headers)):
-        raise BulkUserImportError(
-            "Username and email columns are required."
-        )
+        raise BulkUserImportError("Username and email columns are required.")
 
     unknown = set(headers) - ALLOWED_COLUMNS
 
     if unknown:
-        raise BulkUserImportError(
-            f"Unsupported columns: {', '.join(sorted(unknown))}"
-        )
+        raise BulkUserImportError(f"Unsupported columns: {', '.join(sorted(unknown))}")
 
     return headers
 
@@ -80,14 +71,10 @@ def read_uploaded_file(uploaded_file):
     filename = uploaded_file.name.lower()
 
     if uploaded_file.size > MAX_FILE_SIZE:
-        raise BulkUserImportError(
-            "File size cannot exceed 5 MB."
-        )
+        raise BulkUserImportError("File size cannot exceed 5 MB.")
 
     if not filename.endswith((".csv", ".xlsx")):
-        raise BulkUserImportError(
-            "Only CSV and XLSX files are supported."
-        )
+        raise BulkUserImportError( "Only CSV and XLSX files are supported.")
 
     try:
         if filename.endswith(".csv"):
@@ -110,9 +97,7 @@ def read_uploaded_file(uploaded_file):
                     continue
 
                 if len(values) > len(headers):
-                    raise BulkUserImportError(
-                        f"Too many values in CSV row {row_number}."
-                    )
+                    raise BulkUserImportError( f"Too many values in CSV row {row_number}.")
 
                 values += [""] * (len(headers) - len(values))
 
@@ -131,17 +116,34 @@ def read_uploaded_file(uploaded_file):
             try:
                 sheet = workbook.active
                 iterator = sheet.iter_rows(values_only=True)
-                raw_headers = next(iterator, None)
+                raw_headers = None
+                header_row_number = None
+
+                for row_number, values in enumerate(iterator, start=1):
+                    normalized = [
+                        str(value or "").strip().lower()
+                        for value in values
+                    ]
+
+                    if REQUIRED_COLUMNS.issubset(set(normalized)):
+                        raw_headers = values
+                        header_row_number = row_number
+                        break
+
+                if raw_headers is None:
+                    raise BulkUserImportError(
+                        "Could not find the required username and email columns."
+                    )
+
+                headers = normalize_headers(raw_headers)
 
                 if not raw_headers:
-                    raise BulkUserImportError(
-                        "Excel file is empty."
-                    )
+                    raise BulkUserImportError("Excel file is empty.")
 
                 headers = normalize_headers(raw_headers)
                 rows = []
 
-                for row_number, values in enumerate(iterator, start=2):
+                for row_number, values in enumerate(iterator, start=header_row_number + 1):
                     values = list(values)
 
                     if not any(
@@ -157,9 +159,7 @@ def read_uploaded_file(uploaded_file):
                             value is not None and str(value).strip()
                             for value in extra_values
                         ):
-                            raise BulkUserImportError(
-                                f"Too many values in Excel row {row_number}."
-                            )
+                            raise BulkUserImportError(f"Too many values in Excel row {row_number}.")
 
                     values = values[:len(headers)]
                     values += [None] * (len(headers) - len(values))
@@ -173,29 +173,21 @@ def read_uploaded_file(uploaded_file):
                 workbook.close()
 
     except UnicodeDecodeError:
-        raise BulkUserImportError(
-            "CSV must use UTF-8 encoding."
-        )
+        raise BulkUserImportError("CSV must use UTF-8 encoding.")
+
     except csv.Error:
-        raise BulkUserImportError(
-            "Invalid CSV file format."
-        )
+        raise BulkUserImportError("Invalid CSV file format.")
+
     except BulkUserImportError:
         raise
     except Exception:
-        raise BulkUserImportError(
-            "Unable to read the uploaded file."
-        )
+        raise BulkUserImportError("Unable to read the uploaded file.")
 
     if not rows:
-        raise BulkUserImportError(
-            "No user records found."
-        )
+        raise BulkUserImportError("No user records found.")
 
     if len(rows) > MAX_ROWS:
-        raise BulkUserImportError(
-            f"Maximum {MAX_ROWS} users can be imported at once."
-        )
+        raise BulkUserImportError(f"Maximum {MAX_ROWS} users can be imported at once.")
 
     return rows
 
@@ -244,9 +236,7 @@ def validate_user_row(row, default_role):
     )
 
     if is_superuser:
-        raise ValueError(
-            "Superuser accounts cannot be created through bulk import."
-        )
+        raise ValueError("Superuser accounts cannot be created through bulk import.")
 
     return {
         "username": username,
@@ -263,9 +253,7 @@ def import_users(uploaded_file):
     try:
         default_role = Role.objects.get(name=Role.USER)
     except Role.DoesNotExist:
-        raise BulkUserImportError(
-            "USER role does not exist. Please create it first."
-        )
+        raise BulkUserImportError("USER role does not exist. Please create it first.")
 
     created = 0
     failed = 0
@@ -283,14 +271,10 @@ def import_users(uploaded_file):
             email_key = email.casefold()
 
             if username_key and username_key in seen_usernames:
-                raise ValueError(
-                    "Duplicate username in uploaded file."
-                )
+                raise ValueError("Duplicate username in uploaded file.")
 
             if email_key and email_key in seen_emails:
-                raise ValueError(
-                    "Duplicate email in uploaded file."
-                )
+                raise ValueError("Duplicate email in uploaded file.")
 
             if username_key:
                 seen_usernames.add(username_key)

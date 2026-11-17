@@ -1,5 +1,4 @@
 from rest_framework import serializers
-# from django.contrib.auth import get_user_model
 from base.models import Room,Message,Topic,Role, User
 
 from base.api.serializers import RoleSerializer
@@ -11,13 +10,7 @@ class AdminMessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = [
-            "id",
-            "user",
-            "user_name",
-            "body",
-            "created",
-        ]
+        fields = ["id", "user", "user_name", "body", "created"]
 
     def get_user_name(self, obj):
         if obj.user:
@@ -44,34 +37,14 @@ class AdminRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = Room
 
-        fields = [
-            "id",
-            "name",
-            "description",
-            "host",
-            "host_name",
-            "topics",
-            "topic_names",
-            "participants",
-            "participants_count",
-            "participant_details",
-            "messages_count",
-            "messages",
-            "created",
-            "updated",
+        fields = ["id", "name", "description", "host", "host_name", "topics", "topic_names",
+            "participants", "participants_count", "participant_details",
+            "messages_count", "messages", "created", "updated",
         ]
 
-        read_only_fields = [
-            "id",
-            "host_name",
-            "topic_names",
-            "participants",
-            "participants_count",
-            "participant_details",
-            "messages_count",
-            "messages",
-            "created",
-            "updated",
+        read_only_fields = ["id", "host_name", "topic_names",
+            "participants", "participants_count", "participant_details",
+            "messages_count", "messages", "created", "updated",
         ]
 
     def get_host_name(self, obj):
@@ -116,25 +89,11 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
-            "id",
-            "username",
-            "email",
-            "name",
-            "bio",
-            "avatar",
-            "role",
-            "role_id",
-            "is_active",
-            "is_superuser",
-            "date_joined",
+        fields = ["id", "username", "email", "name", "bio", "avatar",
+            "role", "role_id", "is_active", "is_superuser", "date_joined",
         ]
 
-        read_only_fields = [
-            "id",
-            "is_superuser",
-            "date_joined",
-        ]
+        read_only_fields = [ "id", "is_superuser", "date_joined",]
 
     def create(self, validated_data):
         return create_admin_user(validated_data)
@@ -147,14 +106,9 @@ class BulkUserUploadSerializer(serializers.Serializer):
         filename = uploaded_file.name.lower()
 
         if not filename.endswith((".csv", ".xlsx")):
-            raise serializers.ValidationError(
-                "Only CSV and XLSX files are supported."
-            )
+            raise serializers.ValidationError("Only CSV and XLSX files are supported.")
 
         if uploaded_file.size > 5 * 1024 * 1024:
-            raise serializers.ValidationError(
-                "Maximum file size is 5 MB."
-            )
+            raise serializers.ValidationError("Maximum file size is 5 MB.")
 
         return uploaded_file
-

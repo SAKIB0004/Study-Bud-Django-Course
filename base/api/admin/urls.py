@@ -1,4 +1,3 @@
-
 from django.urls import path
 
 from .views import (
@@ -26,13 +25,10 @@ urlpatterns = [
     path("topics/", AdminTopicListCreateView.as_view(), name="admin-topics"),
 
     #User management
-
     path("users/", AdminUserListCreateView.as_view(), name="admin-user-list-create"),
-
     path("users/<int:pk>/", AdminUserDetailView.as_view(), name="admin-user-detail"),
 
     #Bulk upload
-
     path("users/bulk-create/",AdminBulkUserCreateView.as_view(),name="admin-user-bulk-create",),
 ]
 
