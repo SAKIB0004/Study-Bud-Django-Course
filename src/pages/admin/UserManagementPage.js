@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaPlus, FaEdit, FaTrashAlt, FaFileImport  } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrashAlt, FaFileImport } from "react-icons/fa";
 
 import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
 import AdminTable from "../../components/admin/common/AdminTable";
@@ -9,7 +9,8 @@ import AdminFilter from "../../components/admin/common/AdminFilter";
 import AdminPagination from "../../components/admin/common/AdminPagination";
 import AdminStatusBadge from "../../components/admin/common/AdminStatusBadge";
 import AdminConfirmModal from "../../components/admin/common/AdminConfirmModal";
-import BulkUserImportModal from "../../components/admin/common/BulkUserImportModal";
+// import BulkUserImportModal from "../../components/admin/common/BulkUserImportModal";
+import BulkImportModal from "../../components/admin/common/BulkImportModal";
 
 import adminUserService from "../../services/api/adminUserService";
 
@@ -65,6 +66,7 @@ function UserManagementPage() {
     // Cursor pagination
     const [limit, setLimit] = useState(25);
     const [cursor, setCursor] = useState(null);
+    const [currentBatch, setCurrentBatch] = useState(1);   
 
     const [pagination, setPagination] = useState({
         count: 0,
@@ -95,6 +97,7 @@ function UserManagementPage() {
 
     const handleRefreshUsers = () => {
         setCursor(null);
+        setCurrentBatch(1);              
         setRefreshKey((previous) => previous + 1);
     };
 
@@ -168,26 +171,32 @@ function UserManagementPage() {
     ]);
 
 
+    // --------------------------------
     // Search and Filters
+    // --------------------------------
 
     const handleSearch = (value) => {
         setSearch(value);
         setCursor(null);
+        setCurrentBatch(1);              
     };
 
     const handleRoleFilter = (value) => {
         setRoleFilter(value);
         setCursor(null);
+        setCurrentBatch(1);              
     };
 
     const handleStatusFilter = (value) => {
         setStatusFilter(value);
         setCursor(null);
+        setCurrentBatch(1);            
     };
 
     const handleSuperuserFilter = (value) => {
         setSuperuserFilter(value);
         setCursor(null);
+        setCurrentBatch(1);             
     };
 
 
@@ -198,18 +207,21 @@ function UserManagementPage() {
     const handleNextPage = () => {
         if (pagination.next_cursor) {
             setCursor(pagination.next_cursor);
+            setCurrentBatch((previous) => previous + 1);   
         }
     };
 
     const handlePreviousPage = () => {
         if (pagination.prev_cursor) {
             setCursor(pagination.prev_cursor);
+            setCurrentBatch((previous) => Math.max(1, previous - 1));  
         }
     };
 
     const handlePageSizeChange = (value) => {
         setLimit(Number(value));
         setCursor(null);
+        setCurrentBatch(1);             
     };
 
 
@@ -306,6 +318,7 @@ function UserManagementPage() {
             setFormData({ ...INITIAL_FORM_DATA });
 
             setCursor(null);
+            setCurrentBatch(1);             
             setRefreshKey((previous) => previous + 1);
 
         } catch (err) {
@@ -365,6 +378,7 @@ function UserManagementPage() {
             setSelectedUser(null);
 
             setCursor(null);
+            setCurrentBatch(1);             
             setRefreshKey((previous) => previous + 1);
 
         } catch (err) {
@@ -385,13 +399,22 @@ function UserManagementPage() {
 
 
     // --------------------------------
+    // Row Numbering
+    // --------------------------------
+
+    const firstRow = users.length > 0
+        ? (currentBatch - 1) * limit + 1
+        : 0;
+
+
+    // --------------------------------
     // Table Columns
     // --------------------------------
 
     const columns = [
         {
             label: "SL",
-            render: (user, index) => index + 1,
+            render: (user, index) => firstRow + index,
         },
         {
             label: "Username",
@@ -729,7 +752,8 @@ function UserManagementPage() {
             />
 
             {showBulkImport && (
-                <BulkUserImportModal
+                <BulkImportModal
+                    entity="users"
                     onClose={() => setShowBulkImport(false)}
                     onSuccess={handleRefreshUsers}
                 />

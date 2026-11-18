@@ -118,6 +118,31 @@ const roomService = {
         return response.data;
     },
 
+    // Fetch topics for admin management with search and filters
+    async getAdminTopics(limit = 25, cursor = null, filters = {}) {
+        const params = {
+            limit,
+        };
+
+        if (cursor) {
+            params.cursor = cursor;
+        }
+
+        if (filters.search) {
+            params.search = filters.search;
+        }
+
+        if (filters.topic) {
+            params.topic = filters.topic;
+        }
+
+        const response = await api.get("/admin/topics/list/", {
+            params,
+        });
+
+        return response.data;
+    },
+
 };
 
 export default roomService;

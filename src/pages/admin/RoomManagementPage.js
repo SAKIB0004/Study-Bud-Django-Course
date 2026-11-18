@@ -1,5 +1,5 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FaRegCommentDots, FaFileImport } from "react-icons/fa";
 
 import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
 import AdminTable from "../../components/admin/common/AdminTable";
@@ -10,6 +10,7 @@ import AdminModal from "../../components/admin/common/AdminModal";
 import AdminPagination from "../../components/admin/common/AdminPagination";
 import AdminFilter from "../../components/admin/common/AdminFilter";
 
+import BulkImportModal from "../../components/admin/common/BulkImportModal";
 import AdminRoomForm from "../../components/admin/rooms/AdminRoomForm";
 import AdminRoomMessages from "../../components/admin/rooms/AdminRoomMessages";
 
@@ -17,7 +18,7 @@ import roomService from "../../services/api/roomService";
 
 import "../../assets/styles/admin/admin-common.css";
 
-import { FaRegCommentDots } from "react-icons/fa";
+// import { FaRegCommentDots } from "react-icons/fa";
 
 // Normalize different possible API response formats
 const getListData = (response) => {
@@ -68,9 +69,6 @@ function RoomManagementPage() {
     // The selected dropdown room ID
     const [selectedRoomOption, setSelectedRoomOption] = useState("");
 
-    const [selectedTopic, setSelectedTopic] = useState("");
-    const [selectedHostFilter, setSelectedHostFilter] = useState("");
-
     const [selectedTopicOption, setSelectedTopicOption] = useState("");
     const [topicSearchInput, setTopicSearchInput] = useState("");
     const [topicSearchFilter, setTopicSearchFilter] = useState("");
@@ -117,6 +115,12 @@ function RoomManagementPage() {
     const [messages, setMessages] = useState([]);
     const [messagesLoading, setMessagesLoading] = useState(false);
     const [messagesError, setMessagesError] = useState("");
+
+    // =====================================
+    // Bulk Room Import
+    // =====================================
+
+    const [showBulkImport, setShowBulkImport] = useState(false);
 
     // =====================================
     // Dropdown options
@@ -312,6 +316,25 @@ function RoomManagementPage() {
         hostSearchFilter,
     ]);
 
+    // =====================================
+    // Refresh rooms after bulk import
+    // =====================================
+
+    const handleRefreshRooms = async () => {
+        // Refresh the room table
+        await fetchRooms(null, 1);
+
+        // Refresh Room dropdown options
+        try {
+            const roomsResponse = await roomService.getRooms();
+            setFilterRooms(getListData(roomsResponse));
+        } catch (error) {
+            console.error(
+                "Failed to refresh room dropdown options:",
+                error
+            );
+        }
+    };
 
     // Fetch first page whenever filters or page size change
     useEffect(() => {
@@ -418,12 +441,11 @@ function RoomManagementPage() {
         setSelectedRoomOption("");
         setRoomSearchInput("");
 
-        setSelectedTopic("");
         setSelectedTopicOption("");
         setTopicSearchInput("");
         setTopicSearchFilter("");
 
-        setSelectedHostFilter("");
+        // setSelectedHostFilter("");
         setSelectedHostOption("");
         setHostSearchInput("");
         setHostSearchFilter("");
@@ -822,6 +844,12 @@ function RoomManagementPage() {
                 ]}
                 actions={[
                     {
+                        label: "Import Rooms",
+                        className: "admin-btn-secondary",
+                        onClick: () => setShowBulkImport(true),
+                        icon: <FaFileImport />,
+                    },
+                    {
                         label: "Add Room",
                         className: "admin-btn-primary",
                         onClick: () => setShowAddRoom(true),
@@ -1009,6 +1037,16 @@ function RoomManagementPage() {
                 />
 
             </AdminModal>
+
+            {/* Bulk Room Import Modal */}
+
+            {showBulkImport && (
+                <BulkImportModal
+                    entity="rooms"
+                    onClose={() => setShowBulkImport(false)}
+                    onSuccess={handleRefreshRooms}
+                />
+            )}
 
         </div>
     );
