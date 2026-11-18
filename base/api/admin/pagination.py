@@ -1,27 +1,20 @@
-
 from urllib.parse import parse_qs, urlsplit
 
 from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
 
 
-class AdminRoomCursorPagination(CursorPagination):
-    page_size = 10
+class AdminBaseCursorPagination(CursorPagination):
+    """Base cursor pagination class providing custom helper methods and response structure."""
+
     page_size_query_param = "limit"
     max_page_size = 100
-
     cursor_query_param = "cursor"
-    ordering = ("-created", "-pk")
 
     def paginate_queryset(self, queryset, request, view=None):
-        # CursorPagination does not calculate the total number of records.
+        # CursorPagination does not calculate the total number of records by default.
         self.total_count = queryset.count()
-
-        return super().paginate_queryset(
-            queryset,
-            request,
-            view=view,
-        )
+        return super().paginate_queryset(queryset, request, view=view)
 
     def get_cursor_value(self, url):
         if not url:
@@ -61,10 +54,16 @@ class AdminRoomCursorPagination(CursorPagination):
         })
 
 
-class AdminUserCursorPagination(AdminRoomCursorPagination):
+class AdminRoomCursorPagination(AdminBaseCursorPagination):
     page_size = 25
-    page_size_query_param = "limit"
-    max_page_size = 100
+    ordering = ("-created", "-pk")
 
-    cursor_query_param = "cursor"
+
+class AdminUserCursorPagination(AdminBaseCursorPagination):
+    page_size = 25
     ordering = ("-date_joined", "-pk")
+
+
+class AdminTopicCursorPagination(AdminBaseCursorPagination):
+    page_size = 25
+    ordering = "-pk"

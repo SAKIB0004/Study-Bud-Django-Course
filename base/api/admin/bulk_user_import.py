@@ -1,32 +1,17 @@
-import csv
-import io
-
-from openpyxl import load_workbook
-
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.db import IntegrityError, transaction
 
 from base.models import User, Role
 
-
-MAX_FILE_SIZE = 5 * 1024 * 1024
-MAX_ROWS = 500
+from .bulk_import.exceptions import BulkImportError
+from .bulk_import.file_parser import read_uploaded_file
+from .bulk_import.processor import process_import_rows
 
 REQUIRED_COLUMNS = {"username", "email"}
 
-ALLOWED_COLUMNS = {
-    "username",
-    "email",
-    "name",
-    "is_active",
-    "role",
-    "is_superuser",
-}
+ALLOWED_COLUMNS = {"username", "email", "name", "is_active", "role", "is_superuser"}
 
-
-class BulkUserImportError(Exception):
-    pass
+MAX_ROWS = 500
 
 
 def parse_boolean(value, default=False):
@@ -44,155 +29,7 @@ def parse_boolean(value, default=False):
     raise ValueError(f"Invalid boolean value: {value}")
 
 
-def normalize_headers(raw_headers):
-    headers = [
-        str(header or "").strip().lower()
-        for header in raw_headers
-    ]
-
-    if not headers or any(not header for header in headers):
-        raise BulkUserImportError("Column names cannot be empty.")
-
-    if len(headers) != len(set(headers)):
-        raise BulkUserImportError( "Duplicate column names are not allowed.")
-
-    if not REQUIRED_COLUMNS.issubset(set(headers)):
-        raise BulkUserImportError("Username and email columns are required.")
-
-    unknown = set(headers) - ALLOWED_COLUMNS
-
-    if unknown:
-        raise BulkUserImportError(f"Unsupported columns: {', '.join(sorted(unknown))}")
-
-    return headers
-
-
-def read_uploaded_file(uploaded_file):
-    filename = uploaded_file.name.lower()
-
-    if uploaded_file.size > MAX_FILE_SIZE:
-        raise BulkUserImportError("File size cannot exceed 5 MB.")
-
-    if not filename.endswith((".csv", ".xlsx")):
-        raise BulkUserImportError( "Only CSV and XLSX files are supported.")
-
-    try:
-        if filename.endswith(".csv"):
-            content = uploaded_file.read().decode("utf-8-sig")
-            reader = csv.reader(io.StringIO(content))
-
-            raw_headers = next(reader, None)
-
-            if not raw_headers:
-                raise BulkUserImportError("CSV file is empty.")
-
-            headers = normalize_headers(raw_headers)
-            rows = []
-
-            for row_number, values in enumerate(reader, start=2):
-                if not any(
-                    value is not None and str(value).strip()
-                    for value in values
-                ):
-                    continue
-
-                if len(values) > len(headers):
-                    raise BulkUserImportError( f"Too many values in CSV row {row_number}.")
-
-                values += [""] * (len(headers) - len(values))
-
-                rows.append((
-                    row_number,
-                    dict(zip(headers, values))
-                ))
-
-        else:
-            workbook = load_workbook(
-                uploaded_file,
-                read_only=True,
-                data_only=True,
-            )
-
-            try:
-                sheet = workbook.active
-                iterator = sheet.iter_rows(values_only=True)
-                raw_headers = None
-                header_row_number = None
-
-                for row_number, values in enumerate(iterator, start=1):
-                    normalized = [
-                        str(value or "").strip().lower()
-                        for value in values
-                    ]
-
-                    if REQUIRED_COLUMNS.issubset(set(normalized)):
-                        raw_headers = values
-                        header_row_number = row_number
-                        break
-
-                if raw_headers is None:
-                    raise BulkUserImportError(
-                        "Could not find the required username and email columns."
-                    )
-
-                headers = normalize_headers(raw_headers)
-
-                if not raw_headers:
-                    raise BulkUserImportError("Excel file is empty.")
-
-                headers = normalize_headers(raw_headers)
-                rows = []
-
-                for row_number, values in enumerate(iterator, start=header_row_number + 1):
-                    values = list(values)
-
-                    if not any(
-                        value is not None and str(value).strip()
-                        for value in values
-                    ):
-                        continue
-
-                    if len(values) > len(headers):
-                        extra_values = values[len(headers):]
-
-                        if any(
-                            value is not None and str(value).strip()
-                            for value in extra_values
-                        ):
-                            raise BulkUserImportError(f"Too many values in Excel row {row_number}.")
-
-                    values = values[:len(headers)]
-                    values += [None] * (len(headers) - len(values))
-
-                    rows.append((
-                        row_number,
-                        dict(zip(headers, values))
-                    ))
-
-            finally:
-                workbook.close()
-
-    except UnicodeDecodeError:
-        raise BulkUserImportError("CSV must use UTF-8 encoding.")
-
-    except csv.Error:
-        raise BulkUserImportError("Invalid CSV file format.")
-
-    except BulkUserImportError:
-        raise
-    except Exception:
-        raise BulkUserImportError("Unable to read the uploaded file.")
-
-    if not rows:
-        raise BulkUserImportError("No user records found.")
-
-    if len(rows) > MAX_ROWS:
-        raise BulkUserImportError(f"Maximum {MAX_ROWS} users can be imported at once.")
-
-    return rows
-
-
-def validate_user_row(row, default_role):
+def validate_user_row(row, default_role, seen_usernames, seen_emails):
     username = str(row.get("username") or "").strip()
     email = str(row.get("email") or "").strip().lower()
     name = str(row.get("name") or "").strip()
@@ -213,6 +50,15 @@ def validate_user_row(row, default_role):
         validate_email(email)
     except ValidationError:
         raise ValueError("Invalid email address.")
+
+    username_key = username.casefold()
+    email_key = email.casefold()
+
+    if username_key in seen_usernames:
+        raise ValueError("Duplicate username in uploaded file.")
+
+    if email_key in seen_emails:
+        raise ValueError("Duplicate email in uploaded file.")
 
     if User.objects.filter(username__iexact=username).exists():
         raise ValueError("Username already exists.")
@@ -236,7 +82,9 @@ def validate_user_row(row, default_role):
     )
 
     if is_superuser:
-        raise ValueError("Superuser accounts cannot be created through bulk import.")
+        raise ValueError(
+            "Superuser accounts cannot be created through bulk import."
+        )
 
     return {
         "username": username,
@@ -244,78 +92,78 @@ def validate_user_row(row, default_role):
         "name": name,
         "role": default_role,
         "is_active": is_active,
+        "username_key": username_key,
+        "email_key": email_key,
     }
 
 
 def import_users(uploaded_file):
-    rows = read_uploaded_file(uploaded_file)
+    rows = read_uploaded_file(
+        uploaded_file=uploaded_file,
+        required_columns=REQUIRED_COLUMNS,
+        allowed_columns=ALLOWED_COLUMNS,
+        max_rows=MAX_ROWS,
+    )
 
     try:
         default_role = Role.objects.get(name=Role.USER)
     except Role.DoesNotExist:
-        raise BulkUserImportError("USER role does not exist. Please create it first.")
-
-    created = 0
-    failed = 0
-    errors = []
+        raise BulkImportError(
+            "USER role does not exist. Please create it first."
+        )
 
     seen_usernames = set()
     seen_emails = set()
 
-    for row_number, row in rows:
-        username = str(row.get("username") or "").strip()
-        email = str(row.get("email") or "").strip().lower()
+    def validate_row(row):
+        return validate_user_row(
+            row=row,
+            default_role=default_role,
+            seen_usernames=seen_usernames,
+            seen_emails=seen_emails,
+        )
 
-        try:
-            username_key = username.casefold()
-            email_key = email.casefold()
+    def create_record(data):
+        user = User(
+            username=data["username"],
+            email=data["email"],
+            name=data["name"],
+            role=data["role"],
+            is_active=data["is_active"],
+            is_superuser=False,
+            is_staff=False,
+        )
 
-            if username_key and username_key in seen_usernames:
-                raise ValueError("Duplicate username in uploaded file.")
+        user.set_unusable_password()
+        user.save()
 
-            if email_key and email_key in seen_emails:
-                raise ValueError("Duplicate email in uploaded file.")
+        # Reserve identifiers only after successful creation.
+        seen_usernames.add(data["username_key"])
+        seen_emails.add(data["email_key"])
 
-            if username_key:
-                seen_usernames.add(username_key)
+    result = process_import_rows(
+        rows=rows,
+        validate_row=validate_row,
+        create_record=create_record,
+    )
 
-            if email_key:
-                seen_emails.add(email_key)
+    # Preserve the existing User import response format.
+    for error in result["errors"]:
+        row_number = error["row"]
+        original_row = next(
+            row for number, row in rows if number == row_number
+        )
 
-            data = validate_user_row(row, default_role)
+        error["username"] = str(
+            original_row.get("username") or ""
+        ).strip()
 
-            with transaction.atomic():
-                user = User(
-                    username=data["username"],
-                    email=data["email"],
-                    name=data["name"],
-                    role=data["role"],
-                    is_active=data["is_active"],
-                    is_superuser=False,
-                    is_staff=False,
-                )
-
-                user.set_unusable_password()
-                user.save()
-
-            created += 1
-
-        except (ValueError, IntegrityError) as exc:
-            failed += 1
-
-            errors.append({
-                "row": row_number,
-                "username": username,
-                "email": email,
-                "error": str(exc),
-            })
+        error["email"] = str(
+            original_row.get("email") or ""
+        ).strip().lower()
 
     return {
         "message": "Bulk user import completed.",
-        "summary": {
-            "total_rows": len(rows),
-            "created": created,
-            "failed": failed,
-        },
-        "errors": errors,
+        "summary": result["summary"],
+        "errors": result["errors"],
     }

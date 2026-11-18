@@ -112,3 +112,38 @@ class BulkUserUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError("Maximum file size is 5 MB.")
 
         return uploaded_file
+
+
+class BulkRoomUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    def validate_file(self, uploaded_file):
+        filename = uploaded_file.name.lower()
+
+        if not filename.endswith((".csv", ".xlsx")):
+            raise serializers.ValidationError(
+                "Only CSV and XLSX files are supported."
+            )
+
+        if uploaded_file.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError(
+                "Maximum file size is 5 MB."
+            )
+
+        return uploaded_file
+
+
+class BulkTopicUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    def validate_file(self, uploaded_file):
+        filename = uploaded_file.name.lower()
+
+        if not filename.endswith((".csv", ".xlsx")):
+            raise serializers.ValidationError("Only CSV and XLSX files are supported.")
+
+        if uploaded_file.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("Maximum file size is 5 MB.")
+
+        return uploaded_file
+

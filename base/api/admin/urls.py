@@ -2,12 +2,10 @@ from django.urls import path
 
 from .views import (
     AdminDashboardView,
-    AdminRoomListView,
-    AdminRoomCreateView,
-    AdminTopicListCreateView,
-    AdminUserDetailView,
-    AdminUserListCreateView,
-    AdminBulkUserCreateView,
+    AdminRoomListView, AdminRoomCreateView,
+    AdminTopicListView, AdminTopicListCreateView,
+    AdminUserDetailView, AdminUserListCreateView,
+    AdminBulkUserCreateView, AdminBulkRoomCreateView, AdminBulkTopicCreateView,
 )
 
 
@@ -22,6 +20,7 @@ urlpatterns = [
     path("create-room/",AdminRoomCreateView.as_view(),name="admin-create-room"),
 
     # Topic Management
+    path("topics/list/",AdminTopicListView.as_view(),name="admin-topic-list",),
     path("topics/", AdminTopicListCreateView.as_view(), name="admin-topics"),
 
     #User management
@@ -30,5 +29,7 @@ urlpatterns = [
 
     #Bulk upload
     path("users/bulk-create/",AdminBulkUserCreateView.as_view(),name="admin-user-bulk-create",),
+    path("rooms/bulk-create/",AdminBulkRoomCreateView.as_view(),name="admin-room-bulk-create",),
+    path("topics/bulk-create/",AdminBulkTopicCreateView.as_view(),name="admin-topic-bulk-create",),
 ]
 

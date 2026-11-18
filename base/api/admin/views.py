@@ -12,15 +12,16 @@ from base.models import User, Room, Topic
 
 from .permissions import IsRootAdmin
 from .serializers import (
-    AdminRoomSerializer, AdminUserSerializer, BulkUserUploadSerializer
+    AdminRoomSerializer, AdminUserSerializer,
+    BulkUserUploadSerializer, BulkRoomUploadSerializer, BulkTopicUploadSerializer
 )
-from .bulk_user_import import (
-    import_users,
-    BulkUserImportError,
-)
-from .pagination import AdminRoomCursorPagination, AdminUserCursorPagination
+from .bulk_user_import import import_users
+from .bulk_room_import import import_rooms
+from .bulk_topic_import import import_topics
+from .bulk_import.exceptions import BulkImportError
+from .pagination import AdminRoomCursorPagination, AdminUserCursorPagination, AdminTopicCursorPagination
 from base.api.serializers import TopicSerializer
-
+from django.db.models import Q
 
 
 class AdminDashboardView(APIView):
@@ -131,6 +132,75 @@ class AdminTopicListCreateView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class AdminTopicListView(APIView):
+    permission_classes = [IsAuthenticated, IsRootAdmin]
+
+    def get(self, request):
+        topics = Topic.objects.prefetch_related(
+            "rooms__host"
+        ).all()
+
+        # --------------------------------
+        # Search by topic ID or name
+        # --------------------------------
+
+        search = request.query_params.get("search", "").strip()
+
+        if search:
+            if search.isdigit():
+                topics = topics.filter(
+                    Q(id=search) |
+                    Q(name__icontains=search)
+                )
+            else:
+                topics = topics.filter(
+                    name__icontains=search
+                )
+
+        # --------------------------------
+        # Filter by topic ID or name
+        # --------------------------------
+
+        topic_filter = request.query_params.get(
+            "topic", ""
+        ).strip()
+
+        if topic_filter:
+            if topic_filter.isdigit():
+                topics = topics.filter(id=topic_filter)
+            else:
+                topics = topics.filter(
+                    name__icontains=topic_filter
+                )
+
+        # --------------------------------
+        # Ordering
+        # --------------------------------
+
+        topics = topics.order_by("-pk")
+
+        # --------------------------------
+        # Pagination
+        # --------------------------------
+
+        paginator = AdminTopicCursorPagination()
+
+        paginated_topics = paginator.paginate_queryset(
+            topics,
+            request,
+            view=self,
+        )
+
+        serializer = TopicSerializer(
+            paginated_topics,
+            many=True,
+        )
+
+        return paginator.get_paginated_response(
+            serializer.data
+        )
+
 #User
 
 class AdminUserListCreateView(ListCreateAPIView):
@@ -173,7 +243,7 @@ class AdminUserDetailView(RetrieveUpdateDestroyAPIView):
 
     permission_classes = [IsAuthenticated, IsRootAdmin]
 
-
+# Bulk
 class AdminBulkUserCreateView(APIView):
     permission_classes = [IsAuthenticated, IsRootAdmin]
 
@@ -195,5 +265,62 @@ class AdminBulkUserCreateView(APIView):
             result = import_users(uploaded_file)
             return Response(result,status=status.HTTP_200_OK, )
 
-        except BulkUserImportError as exc:
+        except BulkImportError as exc:
             return Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST,)
+
+
+class AdminBulkRoomCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsRootAdmin]
+
+    def post(self, request):
+        serializer = BulkRoomUploadSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            result = import_rooms(
+                serializer.validated_data["file"]
+            )
+
+            return Response(
+                result,
+                status=status.HTTP_200_OK,
+            )
+
+        except BulkImportError as exc:
+            return Response(
+                {"error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class AdminBulkTopicCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsRootAdmin]
+
+    def post(self, request):
+        serializer = BulkTopicUploadSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            result = import_topics(
+                serializer.validated_data["file"]
+            )
+
+            return Response(
+                result,
+                status=status.HTTP_200_OK,
+            )
+
+        except BulkImportError as exc:
+            return Response(
+                {"error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+
